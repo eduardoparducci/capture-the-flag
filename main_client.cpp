@@ -4,11 +4,11 @@
 #include <unistd.h>
 int main() {
   Client *client = new Client();
-  std::string input_buffer;
+  char input_buffer[20];
 
   client->init();
-  client->send_string();
-  client->receive_string();
+  client->send_string("PING");
+  client->receive_string(input_buffer,20);
   std::cout << "Received: " << input_buffer << std::endl;
   
 }

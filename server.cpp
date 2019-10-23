@@ -47,7 +47,7 @@ void Server::receive_string(char *data, int max_data_size) {
 }
 
 bool Server::send_string(std::string data) {
-  if(send(this->connection_fd, data.c_str(), data.size(), 0) < 0) {
+  if(send(this->connection_fd, data.c_str(), data.size()+1, 0) < 0) {
     std::cout << "Error sending data..." << std::endl;
     return false;
   }

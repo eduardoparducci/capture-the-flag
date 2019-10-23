@@ -24,20 +24,23 @@ bool Client::init() {
   printf("Conectei ao servidor\n");
 }
 
-bool Client::send_string(){
+
+
+bool Client::send_string(std::string data){
   std::string s;
   s = "PING";
   /* Agora, meu socket funciona como um descritor de arquivo usual */
-  send(socket_fd, s.c_str(), s.size(), 0);
-  printf("Escrevi mensagem de ping!\n");
+  send(socket_fd, s.c_str(), s.size()+1, 0);
   sleep(1);
 }
 
-void Client::receive_string(){
+
+
+void Client::receive_string(char *data, int max_data_size){
 /* Recebendo resposta */
   char reply[10];
-  recv(this->socket_fd, reply, 10, 0);
-  printf("Resposta:\n%s\n", reply);
+  recv(this->socket_fd, data, max_data_size, 0);
+  std::cout << "Data received" << std::endl;
   close(socket_fd);
   return ;
 }

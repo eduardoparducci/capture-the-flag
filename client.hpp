@@ -15,8 +15,8 @@ private:
 public:
 	Client();
 	bool init();
-	void receive_string();
-	bool send_string();
+	void receive_string(char *data, int max_data_size);
+	bool send_string(std::string data);
 	
 };
 
