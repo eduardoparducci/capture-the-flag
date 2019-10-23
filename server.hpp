@@ -23,7 +23,7 @@ public:
   bool init();
   void sclose();
   void slisten();
-  void receive_string(std::string *data, int max_data_size);
+  void receive_string(char *data, int max_data_size);
   bool send_string(std::string data);
 };
 

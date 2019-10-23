@@ -1,5 +1,6 @@
 #include "client.hpp"
-#include <stdio.h>
+#include <iostream>
+#include <string>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -24,9 +25,10 @@ bool Client::init() {
 }
 
 bool Client::send_string(){
-	
+  std::string s;
+  s = "PING";
   /* Agora, meu socket funciona como um descritor de arquivo usual */
-  send(socket_fd, "PING", 5, 0);
+  send(socket_fd, s.c_str(), s.size(), 0);
   printf("Escrevi mensagem de ping!\n");
   sleep(1);
 }

@@ -41,7 +41,7 @@ void Server::slisten() {
   this->connection_fd = accept(this->socket_fd, (struct sockaddr*)&this->client, &this->client_size);
 }
 
-void Server::receive_string(std::string *data, int max_data_size) {
+void Server::receive_string(char *data, int max_data_size) {
   recv(this->connection_fd, data, max_data_size, 0);
   std::cout << "Data received" << std::endl;
 }
