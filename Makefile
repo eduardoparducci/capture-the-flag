@@ -4,7 +4,7 @@ server: clrserver
 	g++ -oserver main_server.cpp server.cpp -lncurses -lpthread
 
 client: clrclient
-	g++ -oclient main_client.cpp client.cpp -lncurses -lpthread
+	g++ -oclient main_client.cpp client.cpp gtk.cpp game.cpp -lncurses -lpthread -lglut -lGL -lGLU -lm
 
 clean: clrserver clrclient
 
