@@ -16,9 +16,9 @@ int main() {
     client_data = server->get_string();
     if(client_data.size()) {
       cout << endl << "Client said: " << client_data << endl;
-      server->send_string("Got your message");
     }
-    if(client_data=="goodbye") {
+    if(client_data=="q+") {
+      server->send_string("closing");
       cout << "Closing..." << endl;
       break;
     }
