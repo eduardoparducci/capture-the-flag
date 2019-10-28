@@ -1,4 +1,5 @@
 #include "client.hpp"
+#include "game.hpp"
 #include <iostream>
 #include <string>
 #include <unistd.h>
@@ -9,12 +10,9 @@
 #include <thread>
 #include <chrono>
 #include <stdlib.h>
+#include <mutex>
 
-Client::Client() {
-  socket_fd = socket(AF_INET, SOCK_STREAM, 0);
-  std::cout << "Socket created " << std::endl;
-}
-
+std::mutex buffer_access;
 
 void wait_package(char **buffer, int buffer_size, bool *buffer_status, bool *running, int socket_fd) {  
   while(*running) {
@@ -24,22 +22,35 @@ void wait_package(char **buffer, int buffer_size, bool *buffer_status, bool *run
       *buffer_status = BUSY;
     }
     // ADJUST TO 10ms LATER
-    std::this_thread::sleep_for (std::chrono::milliseconds(100));
+    std::this_thread::sleep_for (std::chrono::milliseconds(10));
   }
   return;
 }
 
-bool Client::init(unsigned int gate, std::string ip, int buffer_size) {
+Client::Client(unsigned int gate, std::string ip, int buffer_size) {
+  socket_fd = socket(AF_INET, SOCK_STREAM, 0);
   // Buffer setup
+  buffer_access.lock();
   this->buffer_size = buffer_size;
   this->buffer_status = FREE;
   this->buffer = (char *)malloc(buffer_size * sizeof(char));
+  buffer_access.unlock();
+  std::cout << "Buffer created with " << buffer_size << "bytes" << std::endl;
+  
 
+  this->ip = ip;
   this->target.sin_family = AF_INET;
   this->target.sin_port = htons(gate);
   inet_aton(ip.c_str(), &(this->target.sin_addr));
-  
-  std::cout << "Trying to connect on gate:" << gate << " ip:" << ip << std::endl;
+
+  std::cout << "Socket created " << std::endl;
+}
+
+bool Client::init(Player *player, Map *map, ObstacleList *obstacles) {
+  this->player = player;
+  this->map = map;
+  this->obstacles = obstacles;
+  std::cout << "Trying to connect on gate:" << this->gate << " ip:" << this->ip << std::endl;
 
   if (connect(this->socket_fd, (struct sockaddr*)&target, sizeof(target)) != 0) {
     std::cout << "Problems occured, exiting..." << std::endl;
@@ -49,7 +60,8 @@ bool Client::init(unsigned int gate, std::string ip, int buffer_size) {
   this->running = true;
   std::thread newthread(wait_package, &(this->buffer), this->buffer_size, &(this->buffer_status), &(this->running), this->socket_fd);
   (this->pkg_thread).swap(newthread);
-
+  
+  std::cout << "Adding player: " <<  player->getName() << "(Not implemented yet)" << std::endl;
   return true;
 }
 
@@ -60,7 +72,7 @@ void Client::cclose() {
   close(socket_fd);
 }
 
-bool Client::send_string(std::string data) {
+bool Client::sendString(std::string data) {
   std::cout << "Sending:"<< data << " ... ";
   if(send(this->socket_fd, data.c_str(), data.size()+1, 0) < 0) {
     std::cout << "Error!" << std::endl;
@@ -70,10 +82,28 @@ bool Client::send_string(std::string data) {
   return true;
 }
 
-std::string Client::get_string() {
-  if(this->buffer_status==FREE) return "";
-  this->buffer_status = FREE;
-  return this->buffer;  
+Player *Client::getPlayer() {
+  return this->player;
 }
 
+ObstacleList *Client::getObstacleList() {
+  return this->obstacles;
+}
 
+Map *Client::getMap() {
+  return this->map;
+}
+
+std::string Client::getString() {
+  if(this->buffer_status==FREE) {
+    return "";
+  }
+  std::string data(this->buffer);
+  this->buffer_status = FREE;
+  return data;  
+}
+
+bool Client::getBufferStatus() {
+  bool status = this->buffer_status;
+  return status;
+}

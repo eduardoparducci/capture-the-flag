@@ -6,6 +6,7 @@
 #include <GL/glut.h>
 #include <GL/freeglut.h>
 #include <map>
+#include <thread>
 
 // Needs to be static because glut library has no access to internal GTK members
 static Gtk *gtk;
@@ -14,14 +15,17 @@ static Gtk *gtk;
 // Need to be global function because because glut has no access to local methods
 
 void keyboardPressDownCallback(unsigned char key, int x, int y) {
+  //std::cout << "Key down callback!" << std::endl;
   gtk->updateKeys(key, true);
 }
 
 void keyboardPressUpCallback(unsigned char key, int x, int y) {
+  //std::cout << "Key up callback!" << std::endl;
   gtk->updateKeys(key, false);
 }
 
 void frameCallback() {
+  //std::cout << "Frame callback!" << std::endl;
   gtk->frameHandler();
 }
 
@@ -29,8 +33,8 @@ void timerCallback(int i) {
   gtk->timeHandler();
 }
 
-// Função callback chamada quando o tamanho da janela é alterado 
 void resizeWindowCallback(GLsizei w, GLsizei h) {
+  //std::cout << "Resize callback!" << std::endl;
   gtk->resizeWindowHandler(w,h);
 }
 
@@ -38,11 +42,11 @@ void resizeWindowCallback(GLsizei w, GLsizei h) {
 
 // Resize window item according to window size
 void Gtk::resizeWindowHandler(GLsizei w, GLsizei h) {
-    // Especifica as dimensões da Viewport
+  // Viewport size
   this->width = w;
   this->height = h;
   glViewport(0, 0, this->width, this->height);
-  // Inicializa o sistema de coordenadas
+  // coordinate system init
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
   gluOrtho2D (-this->win, this->win, -this->win, this->win);
@@ -85,8 +89,9 @@ void Gtk::gridOn() {
 
 // Draw player
 void Gtk::drawPlayer() {
-  RGB color = this->player->getColor();
-  Square s = this->player->getPosition();
+  //Square s = this->s;
+  RGB color = this->client->getPlayer()->getColor();
+  Square s = this->client->getPlayer()->getPosition();
 
   // Cofigure player appearence
   glColor3f(color.r, color.g, color.b); // Color
@@ -102,13 +107,13 @@ void Gtk::drawPlayer() {
   // Player name
   glRasterPos2i(s.x_min, s.y_max+2);
   glColor3f(0.0f, 0.0f, 0.0f);
-  glutBitmapString(GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char *)(this->player->getName().c_str()));
+  glutBitmapString(GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char *)(this->client->getPlayer()->getName().c_str()));
 }
 
 // Draw player
 void Gtk::drawObstacles() {
 
-  std::vector<Obstacle *> *o = this->obstacles->getObstacles();
+  std::vector<Obstacle *> *o = this->client->getObstacleList()->getObstacles();
   Square s;
 
   // Cofigure player appearence
@@ -126,8 +131,8 @@ void Gtk::drawObstacles() {
 
 // Draw map
 void Gtk::drawMap() {
-  Square s = this->map->getBoundaries();
-  RGB color = this->player->getColor();
+  Square s = this->client->getMap()->getBoundaries();
+  RGB color = this->client->getPlayer()->getColor();
   
   glLineWidth(4.0f); //width of line
   glBegin(GL_LINE_LOOP);
@@ -140,7 +145,7 @@ void Gtk::drawMap() {
 
   // Basis
   glColor4f(color.r, color.g, color.b, 0.25f); // Color
-  s = this->map->getBasis();
+  s = this->client->getMap()->getBasis();
   glBegin(GL_QUADS);
   glVertex2i(s.x_min,s.y_min);
   glVertex2i(s.x_min,s.y_max);
@@ -156,59 +161,53 @@ void Gtk::drawInfo() {
   glRasterPos2i(-this->win+3, -this->win+3);
   glColor3f(0.0f, 0.0f, 0.0f);
   glutBitmapString(GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char *)"Player: ");
-  glutBitmapString(GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char *)this->player->getName().c_str());
+  glutBitmapString(GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char *)this->client->getPlayer()->getName().c_str());
 }
 
-// Update position
+// Update position every 20ms
 void Gtk::timeHandler() {
-  Square s = this->player->getPosition();
- 
-  if(gtk->pressed_keys['a']) {
-    s.x_min -= 0.8;
-    s.x_max -= 0.8;
-  }
-  if(gtk->pressed_keys['d']) {
-    s.x_min += 0.8;
-    s.x_max += 0.8;
-  }
-  if(gtk->pressed_keys['w']){
-    s.y_min += 0.8;
-    s.y_max += 0.8;
-  }
-  if(gtk->pressed_keys['s']) {
-    s.y_min -= 0.8;
-    s.y_max -= 0.8;
-  }
-  if(this->map->isValid(s) && !this->obstacles->hit(s)) {
-    this->player->update(s);
+  std::string data = this->client->getString();
+  if(data.length()) {
+    std::string Xmax(&data[data.find("a")+1],&data[data.find("b")-1]);
+    std::string Ymax(&data[data.find("b")+1],&data[data.find("c")-1]);
+    std::string Xmin(&data[data.find("c")+1],&data[data.find("d")-1]);
+    std::string Ymin(data.substr(data.find("d")+1));
+    Square s = {std::stof(Xmax),std::stof(Ymax),std::stof(Xmin),std::stof(Ymin)};
+    this->client->getPlayer()->update(s);
   }
   glutPostRedisplay();
   glutTimerFunc(20, timerCallback, 1);
 }
 
 // Initial config
-void Gtk::init(int argc, char **argv, Player *player, Map *map, ObstacleList *o, Client *c) {
+void Gtk::init(int argc, char **argv, Client *c) {
   gtk = this;
   this->xf = 3;
   this->yf = 3;
   this->win = 150.0f;
   this->height = 500;
   this->width = 700;
-  this->player = player;
-  this->map = map;
-  this->obstacles = o;
   this->client = c;
+  this->s = this->client->getPlayer()->getPosition();
   glutInit(&argc,argv);
   glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
   glutInitWindowSize(this->width,this->height);
   glutInitWindowPosition(0,00);
   glutCreateWindow("Capture the flag");
   glutDisplayFunc(frameCallback);
+  std::cout << "GTK: Frame callback created!" << std::endl;
   glutReshapeFunc(resizeWindowCallback);
+  std::cout << "GTK: Resize callback created!" << std::endl;
   glutIgnoreKeyRepeat(1);
   glutKeyboardFunc(keyboardPressDownCallback);
+  std::cout << "GTK: Keydown callback created!" << std::endl;
   glutKeyboardUpFunc(keyboardPressUpCallback);
+  std::cout << "GTK: Keyup callback created!" << std::endl;
   glutTimerFunc(33, timerCallback, 1);
+  std::cout << "GTK: Time callback created!" << std::endl;
+  //std::thread newthread(timerThread, &(this->client));
+  //(this->time_thread).swap(newthread);
+  
   glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
   glMatrixMode(GL_PROJECTION);
   glEnable(GL_BLEND);
@@ -217,14 +216,13 @@ void Gtk::init(int argc, char **argv, Player *player, Map *map, ObstacleList *o,
   gluOrtho2D(-this->win,this->win,-this->win,this->win);
   glMatrixMode(GL_MODELVIEW);
   glutMainLoop();
+  std::cout << "GTK: successfully initiated!" << std::endl;
 }
 
 // Update keys
 void Gtk::updateKeys(char key, bool is_pressed) {
-  this->pressed_keys[key] = is_pressed;
-
   std::string data(1,key);
   if(is_pressed) data.append("+");
   else           data.append("-");
-  this->client->send_string(data);
+  this->client->sendString(data);
 }

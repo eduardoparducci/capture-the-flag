@@ -7,6 +7,7 @@
 
 #include <thread>
 #include <vector>
+#include <map>
 #include <unistd.h>
 #include <GLFW/glfw3.h>
 #include <GL/glut.h>
@@ -40,14 +41,20 @@ private:
   Square position;
   RGB color;
   std::string name;
-  
+  std::map<char, bool> direction;
+
 public:
   Player(float x, float y, float height, float width, std::string name, RGB color);
   void update(Square p);
   void resize(Square position);
+  void toString();
   Square getPosition();
   RGB getColor();
+  void setDirection(char c, bool value);
+  std::map<char, bool> getDirection();
   std::string getName();
+  std::string serialize();
+  
 };
 
 class Obstacle {
@@ -92,15 +99,14 @@ public:
   bool isPlaying();
 };
 
-// class Physics {
-// private:
-//   Player *p1;
-//   Map *m1;
-//   ObstacleList *obs;
-
-// public:
-//   Physics(Player *p1, Map *m1, ObstacleList *obs);
-//   void walk(char direction);
-//   void update(float deltaT);
-// };
+class Physics {
+private:
+  Player *player;
+  Map *map;
+  ObstacleList *obstacles;
+public:
+  Physics(Player *player, Map *map, ObstacleList *obstacles);
+  Player *getPlayer();
+  void update(char key, bool value);
+};
 #endif

@@ -7,8 +7,24 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <thread>
+#include <mutex>
 #include <chrono>
 #include <stdlib.h>
+
+//std::mutex buffer_access;
+
+void wait_package(char **buffer, int buffer_size, bool *buffer_status, bool *running, int connection_fd) {
+  while(*running) {
+    if(*buffer_status==FREE) {
+      *buffer[0]= '\0';
+      recv(connection_fd, *buffer, buffer_size, 0);
+      *buffer_status = BUSY;
+    }
+    // ADJUST TO 10ms LATER
+    std::this_thread::sleep_for (std::chrono::milliseconds(10));
+  }
+  return;
+}
 
 Server::Server(unsigned int gate, std::string ip, unsigned int buffer_size) {
   // Buffer setup
@@ -26,7 +42,10 @@ Server::Server(unsigned int gate, std::string ip, unsigned int buffer_size) {
   std::cout << "Socket created " << std::endl;
 }
 
-bool Server::init() {
+bool Server::init(Physics *physics) {
+  // Game setup
+  this->physics = physics;
+  
   // General Server setup
   this->myself.sin_family = AF_INET; //protocol
   this->myself.sin_port = htons(this->gate); //gate
@@ -49,19 +68,6 @@ void Server::sclose() {
   close(this->socket_fd);
 }
 
-void wait_package(char **buffer, int buffer_size, bool *buffer_status, bool *running, int connection_fd) {
-  while(*running) {
-    if(*buffer_status==FREE) {
-      *buffer[0]= '\0';
-      recv(connection_fd, *buffer, buffer_size, 0);
-      *buffer_status = BUSY;
-    }
-    // ADJUST TO 10ms LATER
-    std::this_thread::sleep_for (std::chrono::milliseconds(100));
-  }
-  return;
-}
-
 void Server::slisten() {
   listen(this->socket_fd, 2);
   std::cout << "Listening on gate " << this->gate << std::endl;
@@ -74,16 +80,28 @@ void Server::slisten() {
 
 std::string Server::get_string() {
   if(this->buffer_status==FREE) return "";
+  std::string data(this->buffer);
   this->buffer_status = FREE;
+  //std::cout << "Got some data" << std::endl;
   return this->buffer;  
 }
 
 bool Server::send_string(std::string data) {
-  std::cout << "Sending:"<< data << " ... ";
+  // std::cout << "Sending:"<< data << " ... ";
   if(send(this->connection_fd, data.c_str(), data.size()+1, 0) < 0) {
-    std::cout << "Error!" << std::endl;
+    // std::cout << "Error!" << std::endl;
     return false;
   }
-  std::cout << "Success!" << std::endl;
+  // std::cout << "Success!" << std::endl;
   return true;
+}
+
+void Server::updateGame(std::string movement) {
+  //std::cout << "Updating server physics ... ";
+  if(movement.length()) this->physics->update(movement.at(0) , movement.at(1)=='+'? true : false);
+  else this->physics->update(' ',false);
+  //std::cout << "Done!" << std::endl;
+  std::string data = this->physics->getPlayer()->serialize();
+  //std::cout << "Serialized data to send:" << data << std::endl;
+  this->send_string(data);
 }

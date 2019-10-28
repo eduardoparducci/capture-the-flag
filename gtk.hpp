@@ -1,7 +1,6 @@
 #ifndef GTK_HPP
 #define GTK_HPP
 
-#include "game.hpp"
 #include "client.hpp"
 #include <map>
 #include <unistd.h>
@@ -10,20 +9,21 @@
 
 class Gtk {
 private:
-  Map *map;
   Client *client;
-  //Physics *physics;
-  ObstacleList *obstacles;
-  Player *player;
+  Square s;
+  
+  // Window info
   GLfloat xf;
   GLfloat yf;
   GLfloat win;
   GLint height;
   GLint width;
+
+  // Keyboard info
   std::map<char, bool> pressed_keys;
 
 public:
-  void init(int argc, char **argv, Player *player, Map *map, ObstacleList *o, Client *c);
+  void init(int argc, char **argv, Client *c);
   void frameHandler();
   void timeHandler();
   void resizeWindowHandler(GLsizei w, GLsizei h);
@@ -37,6 +37,7 @@ public:
   void drawMap();
   void drawInfo();
   void gridOn();
+  void update();
 };
 #endif
 

@@ -5,6 +5,7 @@
 #include <vector>
 #include "game.hpp"
 #include <iostream>
+#include <map>
 #include <cmath>
 #include <ncurses.h>
 #include <chrono>
@@ -13,6 +14,10 @@
 Player::Player(float x, float y, float height, float width, std::string name, RGB color) {
   this->name = name;
   this->color = color;
+  this->direction['a'] = false;
+  this->direction['w'] = false;
+  this->direction['s'] = false;
+  this->direction['d'] = false;
 
   //Calculate coordinates
   this->position.y_max = y+height/2;
@@ -41,6 +46,36 @@ void Player::update(Square p) {
   this->position = p; 
 }
 
+std::map<char,bool> Player::getDirection() {
+  return this->direction;
+}
+
+void Player::setDirection(char c, bool value) {
+  this->direction[c] = value;
+}
+
+void Player::toString() {
+  std::cout << "Player: " << this->name << std::endl;
+  std::cout << "  Color: RGB(" << this->color.r << "," << this->color.g << "," << this->color.b << ")" << std::endl;
+  std::cout << "  Position: XYxy(" << this->position.x_max << \
+                               "," << this->position.y_max << \
+                               "," << this->position.x_min << \
+                               "," << this->position.y_min << \
+                               ")" << std::endl;
+}
+
+std::string Player::serialize() {
+  std::string data("a");
+  data.append(std::to_string(this->position.x_max));
+  data.append("b");
+  data.append(std::to_string(this->position.y_max));
+  data.append("c");
+  data.append(std::to_string(this->position.x_min));
+  data.append("d");
+  data.append(std::to_string(this->position.y_min));
+  return data;
+}
+
 Obstacle::Obstacle(Square p, Dynamic d) {
   this->position = p;
   this->dynamic = d;
@@ -59,13 +94,12 @@ void Obstacle::update(Square p, Dynamic d) {
   this->dynamic = d;
 }
 
-
 bool Obstacle::hit(Square position) {
-  // 0.8 added empirically
-  if(position.x_max-0.8>=this->position.x_min &&
-     position.x_min+0.8<=this->position.x_max &&
-     position.y_max-0.8>=this->position.y_min &&
-     position.y_min+0.8<=this->position.y_max) {
+  // 0.4 added empirically
+  if(position.x_max-0.4>=this->position.x_min &&
+     position.x_min+0.4<=this->position.x_max &&
+     position.y_max-0.4>=this->position.y_min &&
+     position.y_min+0.4<=this->position.y_max) {
     return true;
   } else {
   return false;
@@ -127,58 +161,38 @@ bool Map::isPlaying() {
   return this->playing;
 }
 
-// Physics::Physics(Player *p1, Map *m1, ObstacleList *obs) {
-//   this->p1 = p1;
-//   this->m1 = m1;
-//   this->obs = obs;
-// }
+Physics::Physics(Player *player, Map *map, ObstacleList *obstacles) {
+   this->player = player;
+   this->map = map;
+   this->obstacles = obstacles;
+ }
 
-// void Physics::walk(char direction) {
-//   int x = this->p1->getX();
-//   int y = this->p1->getY();
-//   if(m1->is_playing()) {
-//     switch(direction) {
-//     case 's':
-//       if(m1->is_valid(x, y+1)) this->p1->update(x, ++y);
-//       break;
-//     case 'w':
-//       if(m1->is_valid(x, y-1)) this->p1->update(x, --y);
-//       break;
-//     case 'd':
-//       if(m1->is_valid(x+1, y)) this->p1->update(++x, y);
-//       break;
-//     case 'a':
-//       if(m1->is_valid(x-1, y)) this->p1->update(--x, y);
-//       break;
-//     }
-//   }
+void Physics::update(char key, bool value) {
+  this->player->setDirection(key, value);
+  Square s = this->player->getPosition();
+  std::map<char, bool> d = this->player->getDirection();
+  if(d['a']) {
+    s.x_min -= 0.8;
+    s.x_max -= 0.8;
+  }
+  if(d['d']) {
+    s.x_min += 0.8;
+    s.x_max += 0.8;
+  }
+  if(d['w']) {
+    s.y_min += 0.8;
+    s.y_max += 0.8;
+  }
+  if(d['s']) {
+    s.y_min -= 0.8;
+    s.y_max -= 0.8;
+  }
+  if(this->map->isValid(s) && !this->obstacles->hit(s)) {
+    // std::cout << "Player position: (" << s.y_max << "," << s.x_max << ")" << std::endl; 
+    this->player->update(s);
+  } // else std::cout << "Player blocked at: (" << s.y_max << "," << s.x_max << ")" << std::endl;
+}
 
-//   // Verify victory
-//   if(y > this->m1->get_victory_line())
-//     this->m1->terminate(true);
-
-//   // Verify defeat
-//   if(this->obs->hit(x,y))
-//     this->m1->terminate(false);
-// }
-
-// void Physics::update(float deltaT) {
-
-//   std::vector<Obstacle *> *o = this->obs->get_obstacles();
-
-//   for (int i = 0; i < (int)(*o).size(); i++) {
-
-//     float vx  = (*o)[i]->get_vx();
-//     float vy  = (*o)[i]->get_vy();    
-//     float new_x = (*o)[i]->get_x() + deltaT * vx/1000;
-//     float new_y = (*o)[i]->get_y() + deltaT * vy/1000;
-
-//     if(this->m1->is_valid((int)new_x, (int)new_y)==false) {
-//       vx  = -vx;
-//       vy  = -vy;
-//       new_x = (*o)[i]->get_x();
-//       new_y = (*o)[i]->get_y();
-//     }
-//     (*o)[i]->update(new_x, new_y, vx, vy);   
-//   }
-// }
+Player *Physics::getPlayer(){
+  return this->player;
+}
