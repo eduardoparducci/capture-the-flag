@@ -1,0 +1,2 @@
+É necessário fazer o download da biblioteca libglfw3-dev.
+Esse laboratorio tem como objetivo enviar teclas de um cliente, e serem recebidas no servidor. Já esta implementado a estrutura do jogo capture de flag, alem de estar utilizando a biblioteca OpenGl. As teclas WASD so para se movimentar e a tecla Q é para sair.
