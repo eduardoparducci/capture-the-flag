@@ -1,10 +1,10 @@
 all: clean server client
 
 server: clrserver
-	g++ -oserver main_server.cpp server.cpp game.cpp -lncurses -lpthread
+	g++ -L~/opt -oserver main_server.cpp server.cpp game.cpp -lncurses -lpthread -std=c++11
 
 client: clrclient
-	g++ -oclient main_client.cpp client.cpp gtk.cpp game.cpp -lncurses -lpthread -lglut -lGL -lGLU -lm
+	g++ -L./opt/lib/ -oclient main_client.cpp client.cpp gtk.cpp game.cpp -lncurses -lpthread -lglut -lGL -lGLU -lm -std=c++11
 
 clean: clrserver clrclient
 

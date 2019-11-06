@@ -31,7 +31,7 @@ private:
   unsigned int gate;
   std::string ip;
   std::thread pkg_thread;
-  
+
 public:
   Server(unsigned int gate, std::string ip, unsigned int buffer_size);
   bool init(Physics *physics);

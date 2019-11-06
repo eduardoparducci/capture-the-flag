@@ -3,8 +3,8 @@
 #include "client.hpp"
 #include <iostream>
 //#include <GLFW/glfw3.h>
-#include <GL/glut.h>
-#include <GL/freeglut.h>
+#include "opt/include/GL/glut.h"
+#include "opt/include/GL/freeglut.h"
 #include <map>
 #include <thread>
 

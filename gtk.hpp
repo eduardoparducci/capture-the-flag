@@ -4,8 +4,7 @@
 #include "client.hpp"
 #include <map>
 #include <unistd.h>
-//#include <GLFW/glfw3.h>
-#include <GL/glut.h>
+#include "opt/include/GL/glut.h"
 
 class Gtk {
 private:
