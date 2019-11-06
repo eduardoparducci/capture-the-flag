@@ -1,5 +1,6 @@
 #include "client.hpp"
 #include "game.hpp"
+#include "json.hpp"
 #include <iostream>
 #include <string>
 #include <unistd.h>
@@ -14,17 +15,29 @@
 
 std::mutex buffer_access;
 
-void wait_package(char **buffer, int buffer_size, bool *buffer_status, bool *running, int socket_fd) {  
+void wait_package(char **buffer, int buffer_size, bool *buffer_status, bool *running, int socket_fd) {
   while(*running) {
     if(*buffer_status==FREE) {
       *buffer[0]= '\0';
       recv(socket_fd, *buffer, buffer_size, 0);
       *buffer_status = BUSY;
     }
-    // ADJUST TO 10ms LATER
     std::this_thread::sleep_for (std::chrono::milliseconds(10));
   }
   return;
+}
+
+void wait_json_package(nlohmann::json *json_buffer, bool *json_buffer_status, bool *running, int socket_fd) {
+  char *data = (char *) malloc(JSON_BUFFER_SIZE * sizeof(char));
+  while(*running) {
+    if(*json_buffer_status==FREE) {
+      recv(socket_fd, data, JSON_BUFFER_SIZE, 0);
+      *json_buffer = nlohmann::json::parse(data);
+      *json_buffer_status = BUSY;
+    }
+    std::this_thread::sleep_for (std::chrono::milliseconds(100));
+  }
+  free(data);
 }
 
 Client::Client(unsigned int gate, std::string ip, int buffer_size) {
@@ -79,6 +92,22 @@ bool Client::sendString(std::string data) {
     return false;
   }
   std::cout << "Success!" << std::endl;
+
+  // Testing JSON library
+  nlohmann::json data_json;
+  data_json["data"] = data;
+  std::cout << data_json.dump(4) << std::endl;
+  return true;
+}
+
+bool Client::sendJson(nlohmann::json data) {
+  std::string data_serialized = data.dump();
+  std::cout << "Sending:"<< data_serialized << std::endl;
+  if(send(this->socket_fd, data_serialized.c_str(), data_serialized.size()+1, 0) < 0) {
+    std::cout << "Status: Error!" << std::endl;
+    return false;
+  }
+  std::cout << "Status: Success!" << std::endl;
   return true;
 }
 

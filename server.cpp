@@ -11,6 +11,7 @@
 #include <chrono>
 #include <stdlib.h>
 
+#include "json.hpp"
 //std::mutex buffer_access;
 
 void wait_package(char **buffer, int buffer_size, bool *buffer_status, bool *running, int connection_fd) {
@@ -24,6 +25,19 @@ void wait_package(char **buffer, int buffer_size, bool *buffer_status, bool *run
     std::this_thread::sleep_for (std::chrono::milliseconds(10));
   }
   return;
+}
+
+void wait_json_package(nlohmann::json *json_buffer, bool *json_buffer_status, bool *running, int connection_fd) {
+  char *data = (char *) malloc(JSON_BUFFER_SIZE * sizeof(char));
+  while(*running) {
+    if(*json_buffer_status==FREE) {
+      recv(connection_fd, data, JSON_BUFFER_SIZE, 0);
+      *json_buffer = nlohmann::json::parse(data);
+      *json_buffer_status = BUSY;
+    }
+    std::this_thread::sleep_for (std::chrono::milliseconds(100));
+  }
+  free(data);
 }
 
 Server::Server(unsigned int gate, std::string ip, unsigned int buffer_size) {
@@ -74,7 +88,8 @@ void Server::slisten() {
   std::cout << "Waiting..." << std::endl;
   this->connection_fd = accept(this->socket_fd, (struct sockaddr*)&this->client, &this->client_size);
   this->running = true;
-  std::thread newthread(wait_package, &(this->buffer), this->buffer_size, &(this->buffer_status), &(this->running), this->connection_fd);
+  // std::thread newthread(wait_package, &(this->buffer), this->buffer_size, &(this->buffer_status), &(this->running), this->connection_fd);
+  std::thread newthread(wait_json_package, &(this->json_buffer), &(this->json_buffer_status), &(this->running), this->connection_fd);
   (this->pkg_thread).swap(newthread);
 }
 
@@ -84,6 +99,16 @@ std::string Server::get_string() {
   this->buffer_status = FREE;
   //std::cout << "Got some data" << std::endl;
   return this->buffer;  
+}
+
+nlohmann::json Server::getJson() {
+  nlohmann::json data;
+  if(this->json_buffer_status==BUSY) {
+    data = this->json_buffer;
+    this->json_buffer_status = FREE;
+    std::cout << "Got some JSON! :)" << std::endl;
+  }
+    return data;  
 }
 
 bool Server::send_string(std::string data) {
@@ -105,3 +130,14 @@ void Server::updateGame(std::string movement) {
   //std::cout << "Serialized data to send:" << data << std::endl;
   this->send_string(data);
 }
+
+void Server::updateGameJson(nlohmann::json movement) {
+  std::cout << "Updating server physics with JSON... ";
+  this->physics->updateJson(movement);
+  std::cout << "Done!" << std::endl;
+  
+  std::string data = this->physics->getPlayer()->serialize();
+  //std::cout << "Serialized data to send:" << data << std::endl;
+  this->send_string(data);
+}
+

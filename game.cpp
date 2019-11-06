@@ -11,6 +11,8 @@
 #include <chrono>
 #include <thread>
 
+#include "json.hpp"
+
 Player::Player(float x, float y, float height, float width, std::string name, RGB color) {
   this->name = name;
   this->color = color;
@@ -50,8 +52,16 @@ std::map<char,bool> Player::getDirection() {
   return this->direction;
 }
 
+nlohmann::json Player::getDirectionJson() {
+  return this->directionJson;
+}
+
 void Player::setDirection(char c, bool value) {
   this->direction[c] = value;
+}
+
+void Player::setDirectionJson(nlohmann::json movement) {
+  this->directionJson[movement.begin().key()] = movement.begin().value();
 }
 
 void Player::toString() {
@@ -184,6 +194,33 @@ void Physics::update(char key, bool value) {
     s.y_max += 0.8;
   }
   if(d['s']) {
+    s.y_min -= 0.8;
+    s.y_max -= 0.8;
+  }
+  if(this->map->isValid(s) && !this->obstacles->hit(s)) {
+    // std::cout << "Player position: (" << s.y_max << "," << s.x_max << ")" << std::endl; 
+    this->player->update(s);
+  } // else std::cout << "Player blocked at: (" << s.y_max << "," << s.x_max << ")" << std::endl;
+}
+
+void Physics::updateJson(nlohmann::json movement) {
+  this->player->setDirectionJson(movement);
+  Square s = this->player->getPosition();
+  nlohmann::json d = this->player->getDirectionJson();
+  //std::map<char, bool> d = this->player->getDirection();
+  if(d.value("a",false)) {
+    s.x_min -= 0.8;
+    s.x_max -= 0.8;
+  }
+  if(d.value("d",false)) {
+    s.x_min += 0.8;
+    s.x_max += 0.8;
+  }
+  if(d.value("w",false)) {
+    s.y_min += 0.8;
+    s.y_max += 0.8;
+  }
+  if(d.value("s",false)) {
     s.y_min -= 0.8;
     s.y_max -= 0.8;
   }

@@ -5,6 +5,8 @@
 #include "server.hpp"
 #include "game.hpp"
 
+#include "json.hpp"
+
 using namespace std;
 int main() {
   Map *map = new Map({100.0f, 100.0f, -100.0f, -100.0f}, {100.0f, 100.0f, 10.0f, -100.0f});
@@ -16,6 +18,8 @@ int main() {
   Server *server = new Server(3001,"127.0.0.1", 200);
   string server_data, client_data;
 
+  nlohmann::json json_client_data;
+  
   obs->add_obstacle(o0);
   obs->add_obstacle(o1);
   physics = new Physics(player,map,obs);
@@ -24,16 +28,18 @@ int main() {
   server->slisten();
 
   while(1) {
-    client_data = server->get_string();
-    server->updateGame(client_data);
-    if(client_data.size()) {
-      cout << endl << "Client movement: " << client_data << endl;
+    // client_data = server->get_string();
+    // server->updateGame(client_data);
+    json_client_data = server->getJson();
+    if(json_client_data) {
+      server->updateGameJson(json_client_data);
+      cout << endl << "Client movement: " << json_client_data.dump(4) << endl;
     }
-    if(client_data=="q+") {
-      server->send_string("closing");
-      cout << "Closing..." << endl;
-      break;
-    }
+    // if(client_data=="q+") {
+    //   server->send_string("closing");
+    //   cout << "Closing..." << endl;
+    //   break;
+    // }
     std::this_thread::sleep_for (std::chrono::milliseconds(10));
   }
   server->sclose();

@@ -9,9 +9,12 @@
 #include <arpa/inet.h>
 #include <thread>
 #include "game.hpp"
+#include "json.hpp"
 
 #define BUSY true
 #define FREE false
+
+#define JSON_BUFFER_SIZE 1000
 
 class Client{
 private:
@@ -30,7 +33,11 @@ private:
   unsigned int gate;
   std::string ip;
   std::thread pkg_thread;
-  
+
+  // JSON buffer test
+  nlohmann::json json_buffer;
+  bool json_buffer_status;
+
 public:
 	Client(unsigned int gate, std::string ip, int buffer_size);
 	bool init(Player *player, Map *map, ObstacleList *obstacles);
@@ -41,6 +48,8 @@ public:
   Player *getPlayer();
   Map *getMap();
   ObstacleList *getObstacleList();
+
+  bool sendJson(nlohmann::json data);
 };
 
 #endif

@@ -27,8 +27,6 @@ public:
   void frameHandler();
   void timeHandler();
   void resizeWindowHandler(GLsizei w, GLsizei h);
-  GLfloat getX();
-  GLfloat getY();
   void setX(GLfloat x);
   void setY(GLfloat y);
   void updateKeys(char key, bool is_pressed);
@@ -38,6 +36,8 @@ public:
   void drawInfo();
   void gridOn();
   void update();
+  GLfloat getX();
+  GLfloat getY();
 };
 #endif
 

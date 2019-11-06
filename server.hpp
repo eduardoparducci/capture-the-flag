@@ -10,6 +10,9 @@
 #include <arpa/inet.h>
 #include <thread>
 
+#include "json.hpp"
+#define JSON_BUFFER_SIZE 1000
+
 #define BUSY true
 #define FREE false
 
@@ -31,6 +34,10 @@ private:
   unsigned int gate;
   std::string ip;
   std::thread pkg_thread;
+
+  // JSON buffer test
+  nlohmann::json json_buffer;
+  bool json_buffer_status;
   
 public:
   Server(unsigned int gate, std::string ip, unsigned int buffer_size);
@@ -40,6 +47,9 @@ public:
   std::string get_string();
   bool send_string(std::string data);
   void updateGame(std::string movement);
+
+  void updateGameJson(nlohmann::json movement);
+  nlohmann::json getJson();
 };
 
 #endif

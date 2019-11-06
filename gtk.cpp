@@ -8,6 +8,8 @@
 #include <map>
 #include <thread>
 
+#include "json.hpp"
+
 // Needs to be static because glut library has no access to internal GTK members
 static Gtk *gtk;
 
@@ -221,8 +223,15 @@ void Gtk::init(int argc, char **argv, Client *c) {
 
 // Update keys
 void Gtk::updateKeys(char key, bool is_pressed) {
-  std::string data(1,key);
-  if(is_pressed) data.append("+");
-  else           data.append("-");
-  this->client->sendString(data);
+  std::cout << "Update keys called" << std::endl;
+  // std::string data(1,key);
+  // if(is_pressed) data.append("+");
+  // else           data.append("-");
+  // this->client->sendString(data);
+  if(key!='a' && key!='w' && key!='s' && key!='d') return;
+  static std::string c(1,key);
+  nlohmann::json data;
+  data[c] = is_pressed;
+  std::cout << "Updating keys with following JSON:" << std::endl << data.dump(4) << std::endl;
+  this->client->sendJson(data);
 }
