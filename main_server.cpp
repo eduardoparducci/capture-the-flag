@@ -28,18 +28,10 @@ int main() {
   server->slisten();
 
   while(1) {
-    // client_data = server->get_string();
-    // server->updateGame(client_data);
-    json_client_data = server->getJson();
-    if(json_client_data) {
-      server->updateGameJson(json_client_data);
-      cout << endl << "Client movement: " << json_client_data.dump(4) << endl;
+    client_data = server->get_string();
+    if(client_data.length()) {
+      cout << endl << "Client data: " << client_data << endl;
     }
-    // if(client_data=="q+") {
-    //   server->send_string("closing");
-    //   cout << "Closing..." << endl;
-    //   break;
-    // }
     std::this_thread::sleep_for (std::chrono::milliseconds(10));
   }
   server->sclose();

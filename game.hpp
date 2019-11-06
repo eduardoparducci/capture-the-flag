@@ -60,7 +60,8 @@ public:
   std::map<char, bool> getDirection();
   std::string getName();
   std::string serialize();
-  
+  std::string toJson();  
+
 };
 
 class Obstacle {

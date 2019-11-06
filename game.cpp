@@ -86,6 +86,13 @@ std::string Player::serialize() {
   return data;
 }
 
+std::string Player::toJson() {
+  nlohmann::json data;
+  data["name"] = this->name;
+  return data.dump();
+}
+
+
 Obstacle::Obstacle(Square p, Dynamic d) {
   this->position = p;
   this->dynamic = d;

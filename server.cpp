@@ -88,8 +88,8 @@ void Server::slisten() {
   std::cout << "Waiting..." << std::endl;
   this->connection_fd = accept(this->socket_fd, (struct sockaddr*)&this->client, &this->client_size);
   this->running = true;
-  // std::thread newthread(wait_package, &(this->buffer), this->buffer_size, &(this->buffer_status), &(this->running), this->connection_fd);
-  std::thread newthread(wait_json_package, &(this->json_buffer), &(this->json_buffer_status), &(this->running), this->connection_fd);
+  std::thread newthread(wait_package, &(this->buffer), this->buffer_size, &(this->buffer_status), &(this->running), this->connection_fd);
+  //std::thread newthread(wait_package, &(this->buffer), &(this->buffer_size), &(this->buffer_status), &(this->running), this->connection_fd);
   (this->pkg_thread).swap(newthread);
 }
 
