@@ -9,7 +9,7 @@
 #include <vector>
 #include <map>
 #include <unistd.h>
-#include <GLFW/glfw3.h>
+//#include <GLFW/glfw3.h>
 #include <GL/glut.h>
 
 struct Dynamic {
