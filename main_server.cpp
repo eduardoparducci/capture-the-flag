@@ -12,7 +12,7 @@ int main() {
   Obstacle *o1 = new Obstacle ({30.0f, -30.0f, 20.0f, -40.0f},{0,0,0});
   ObstacleList *obs = new ObstacleList();
   Physics *physics;
-  Player *player = new Player(0.0f, 0.0f, 7.0f, 5.0f, "Eduardo", {1.0f, 0.0f, 0.0f});
+  Player *player = new Player(0.0f, 0.0f, 7.0f, 5.0f, "Player 1", {1.0f, 0.0f, 0.0f});
   Server *server = new Server(3001,"127.0.0.1", 200);
   string server_data, client_data;
 

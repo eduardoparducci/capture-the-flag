@@ -167,13 +167,25 @@ void Gtk::drawInfo() {
 // Update position every 20ms
 void Gtk::timeHandler() {
   std::string data = this->client->getString();
+  std::string Xmax, Ymax, Xmin, Ymin;
+  unsigned first, last;
   if(data.length()) {
-    std::string Xmax(&data[data.find("a")+1],&data[data.find("b")-1]);
-    std::string Ymax(&data[data.find("b")+1],&data[data.find("c")-1]);
-    std::string Xmin(&data[data.find("c")+1],&data[data.find("d")-1]);
-    std::string Ymin(data.substr(data.find("d")+1));
-    Square s = {std::stof(Xmax),std::stof(Ymax),std::stof(Xmin),std::stof(Ymin)};
-    this->client->getPlayer()->update(s);
+    first = data.find("a")+1;
+    last = data.find("b");
+    Xmax = data.substr(first,last-first);
+    first = data.find("b")+1;
+    last = data.find("c");
+    Ymax = data.substr(first,last-first);
+    first = data.find("c")+1;
+    last = data.find("d");
+    Xmin = data.substr(first,last-first);
+    first = data.find("d")+1;
+    Ymin = data.substr(first);
+    //std::cout << "XM=" << Xmax << " YM=" << Ymax << " Xm=" << Xmin << " Ym=" << Ymin << std::endl;
+    if(Xmax.length() && Xmin.length() && Ymin.length() && Ymax.length()) {
+      Square s = {std::stof(Xmax),std::stof(Ymax),std::stof(Xmin),std::stof(Ymin)};
+      this->client->getPlayer()->update(s);
+    }
   }
   glutPostRedisplay();
   glutTimerFunc(20, timerCallback, 1);
