@@ -1,18 +1,4 @@
 #include "server.hpp"
-#include <iostream>
-#include <string>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <thread>
-#include <mutex>
-#include <chrono>
-#include <stdlib.h>
-
-#include "json.hpp"
-//std::mutex buffer_access;
 
 void wait_package(char **buffer, int buffer_size, bool *buffer_status, bool *running, int connection_fd) {
   while(*running) {
@@ -25,19 +11,6 @@ void wait_package(char **buffer, int buffer_size, bool *buffer_status, bool *run
     std::this_thread::sleep_for (std::chrono::milliseconds(10));
   }
   return;
-}
-
-void wait_json_package(nlohmann::json *json_buffer, bool *json_buffer_status, bool *running, int connection_fd) {
-  char *data = (char *) malloc(JSON_BUFFER_SIZE * sizeof(char));
-  while(*running) {
-    if(*json_buffer_status==FREE) {
-      recv(connection_fd, data, JSON_BUFFER_SIZE, 0);
-      *json_buffer = nlohmann::json::parse(data);
-      *json_buffer_status = BUSY;
-    }
-    std::this_thread::sleep_for (std::chrono::milliseconds(100));
-  }
-  free(data);
 }
 
 Server::Server(unsigned int gate, std::string ip, unsigned int buffer_size) {
@@ -89,7 +62,6 @@ void Server::slisten() {
   this->connection_fd = accept(this->socket_fd, (struct sockaddr*)&this->client, &this->client_size);
   this->running = true;
   std::thread newthread(wait_package, &(this->buffer), this->buffer_size, &(this->buffer_status), &(this->running), this->connection_fd);
-  //std::thread newthread(wait_package, &(this->buffer), &(this->buffer_size), &(this->buffer_status), &(this->running), this->connection_fd);
   (this->pkg_thread).swap(newthread);
 }
 
@@ -101,17 +73,7 @@ std::string Server::get_string() {
   return this->buffer;  
 }
 
-nlohmann::json Server::getJson() {
-  nlohmann::json data;
-  if(this->json_buffer_status==BUSY) {
-    data = this->json_buffer;
-    this->json_buffer_status = FREE;
-    std::cout << "Got some JSON! :)" << std::endl;
-  }
-    return data;  
-}
-
-bool Server::send_string(std::string data) {
+bool Server::send_string(string data) {
   // std::cout << "Sending:"<< data << " ... ";
   if(send(this->connection_fd, data.c_str(), data.size()+1, 0) < 0) {
     // std::cout << "Error!" << std::endl;
@@ -121,7 +83,7 @@ bool Server::send_string(std::string data) {
   return true;
 }
 
-void Server::updateGame(std::string movement) {
+void Server::updateGame(string movement) {
   //std::cout << "Updating server physics ... ";
   if(movement.length()) this->physics->update(movement.at(0) , movement.at(1)=='+'? true : false);
   else this->physics->update(' ',false);
@@ -131,7 +93,7 @@ void Server::updateGame(std::string movement) {
   this->send_string(data);
 }
 
-void Server::updateGameJson(nlohmann::json movement) {
+void Server::updateGameJson(json movement) {
   std::cout << "Updating server physics with JSON... ";
   this->physics->updateJson(movement);
   std::cout << "Done!" << std::endl;

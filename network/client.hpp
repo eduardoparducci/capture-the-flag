@@ -1,20 +1,20 @@
 #ifndef CLIENT_HPP
 #define CLIENT_HPP
 
-#include <string>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <thread>
-#include "game.hpp"
-#include "json.hpp"
+// external libraries
+#include "../libraries.hpp"
+#include "../data/json.hpp"
+#include "../game/map.hpp"
+#include "../game/obstacles.hpp"
+#include "../game/players.hpp"
 
 #define BUSY true
 #define FREE false
 
 #define JSON_BUFFER_SIZE 1000
+
+using json = nlohmann::json;
+using namespace std;
 
 class Client{
 private:
@@ -34,22 +34,16 @@ private:
   std::string ip;
   std::thread pkg_thread;
 
-  // JSON buffer test
-  nlohmann::json json_buffer;
-  bool json_buffer_status;
-
 public:
-	Client(unsigned int gate, std::string ip, int buffer_size);
+	Client(unsigned int gate, string ip, int buffer_size);
 	bool init(Player *player, Map *map, ObstacleList *obstacles);
-  std::string getString();
-	bool sendString(std::string data);
+  string getString();
+	bool sendString(string data);
   bool getBufferStatus();
   void cclose();
   Player *getPlayer();
   Map *getMap();
   ObstacleList *getObstacleList();
-
-  bool sendJson(nlohmann::json data);
 };
 
 #endif

@@ -1,11 +1,14 @@
 #ifndef GTK_HPP
 #define GTK_HPP
 
-#include "client.hpp"
-#include <map>
-#include <unistd.h>
-#include <GLFW/glfw3.h>
-#include <GL/glut.h>
+// external libraries
+#include "../libraries.hpp"
+#include "../game/players.hpp"
+#include "../network/client.hpp"
+#include "../data/json.hpp"
+
+using json = nlohmann::json;
+using namespace std;
 
 class Gtk {
 private:

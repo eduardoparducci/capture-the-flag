@@ -1,13 +1,16 @@
-#include <iostream>
-#include <string>
-#include <chrono>
-#include <thread>
-#include "server.hpp"
-#include "game.hpp"
+#include "libraries.hpp"
 
-#include "json.hpp"
+#include "game/map.hpp"
+#include "game/obstacles.hpp"
+#include "game/players.hpp"
+#include "game/physics.hpp"
+#include "network/server.hpp"
+#include "data/json.hpp"
+#include "data/structures.hpp"
 
+using json = nlohmann::json;
 using namespace std;
+
 int main() {
   Map *map = new Map({100.0f, 100.0f, -100.0f, -100.0f}, {100.0f, 100.0f, 10.0f, -100.0f});
   Obstacle *o0 = new Obstacle ({30.0f, 30.0f, 20.0f, 20.0f},{0,0,0});
@@ -18,7 +21,7 @@ int main() {
   Server *server = new Server(3001,"127.0.0.1", 200);
   string server_data, client_data;
 
-  nlohmann::json json_client_data;
+  json json_client_data;
   
   obs->add_obstacle(o0);
   obs->add_obstacle(o1);

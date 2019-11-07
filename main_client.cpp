@@ -1,9 +1,12 @@
-#include <iostream>
-#include <string>
-#include "client.hpp"
-#include "gtk.hpp"
-#include "game.hpp"
-#include "json.hpp"
+#include "libraries.hpp"
+
+#include "game/map.hpp"
+#include "game/obstacles.hpp"
+#include "game/players.hpp"
+#include "network/client.hpp"
+#include "data/json.hpp"
+#include "data/structures.hpp"
+#include "gtk/gtk.hpp"
 
 using namespace std;
 int main(int argc, char **argv) {
@@ -13,17 +16,13 @@ int main(int argc, char **argv) {
   ObstacleList *obs = new ObstacleList();
   Player *player = new Player(0.0f, 0.0f, 7.0f, 5.0f, "Eduardo", {1.0f, 0.0f, 0.0f});
   Client *client = new Client(3001, "127.0.0.1", 200);
-  //Gtk *gtk = new Gtk();
+  Gtk *gtk = new Gtk();
   string server_data;
 
   obs->add_obstacle(o0);
   obs->add_obstacle(o1);
   if(!client->init(player, map, obs)) return 1;
-  while(1) { 
-    client->sendString(player->toJson());
-    std::this_thread::sleep_for (std::chrono::milliseconds(1000));    
-  }
-  //gtk->init(argc, argv, client);
+  gtk->init(argc, argv, client);
   client->cclose();
   return 0;
 }
