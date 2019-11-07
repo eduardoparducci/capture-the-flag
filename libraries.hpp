@@ -13,8 +13,9 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <GLFW/glfw3.h>
-#include <GL/glut.h>
+//#include <GLFW/glfw3.h>
+//#include <GL/glut.h>
+#include <GL/freeglut.h>
 #include <thread>
 
 #endif

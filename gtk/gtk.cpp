@@ -1,5 +1,3 @@
-#include <GLFW/glfw3.h>
-#include <GL/freeglut.h>
 #include "gtk.hpp"
 
 // Needs to be static because glut library has no access to internal GTK members
