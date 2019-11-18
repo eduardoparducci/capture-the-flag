@@ -34,7 +34,7 @@ void Physics::update(char key, bool value) {
     direction["up"
     this->player->update(s);
   }
-}
+ }
 
 void Physics::updateJson(json movement) {
   this->player->setDirectionJson(movement);

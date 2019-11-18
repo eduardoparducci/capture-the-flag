@@ -1,7 +1,8 @@
 #include "players.hpp"
 
-Player::Player(float x, float y, float height, float width, string name, RGB color) {
+Player::Player(float x, float y, float height, float width, string name, RGB color, unsigned id) {
   this->name = name;
+  this->id = id;
   this->color = color;
   this->direction['a'] = false;
   this->direction['w'] = false;
@@ -15,40 +16,23 @@ Player::Player(float x, float y, float height, float width, string name, RGB col
   this->position.x_min = x-width/2;
 }
 
+void Player::setId(unsigned id) {
+  this->id = id;
+}
+
 void Player::resize(Square p) {
   this->position = p;
 }
 
-Square Player::getPosition() {
-  return this->position;
-}
-
-string Player::getName() {
-  return this->name;
-}
-
-RGB Player::getColor() {
-  return this->color;
-}
-
-void Player::update(Square p) {
-  this->position = p; 
-}
-
-map<char,bool> Player::getDirection() {
-  return this->direction;
-}
-
-json Player::getDirectionJson() {
-  return this->directionJson;
+void Player::update(json p) {
+  this->position.x_max = p.at("x_max");
+  this->position.x_max = p.at("y_max");
+  this->position.x_max = p.at("x_min");
+  this->position.x_max = p.at("y_min");
 }
 
 void Player::setDirection(char c, bool value) {
   this->direction[c] = value;
-}
-
-void Player::setDirectionJson(json movement) {
-  this->directionJson[movement.begin().key()] = movement.begin().value();
 }
 
 void Player::toString() {
@@ -59,6 +43,10 @@ void Player::toString() {
                                "," << this->position.x_min << \
                                "," << this->position.y_min << \
                                ")" << endl;
+}
+
+string Player::getName() {
+  return this->name;
 }
 
 string Player::serialize() {
@@ -73,8 +61,33 @@ string Player::serialize() {
   return data;
 }
 
-string Player::toJson() {
-  json data;
-  data["name"] = this->name;
-  return data.dump();
+unsigned Player::getId() {
+  return this->id;
+}
+
+map<char,bool> Player::getDirection() {
+  return this->direction;
+}
+
+json Player::toJson() {
+  json player;
+  player["id"] = this->id;
+  player["name"] = this->name;
+  player["position"]["x_max"]  = this->position.x_max;
+  player["position"]["x_min"]  = this->position.x_min;
+  player["position"]["y_max"]  = this->position.y_max;
+  player["position"]["y_min"]  = this->position.y_min;
+  player["direction"]["up"]    = this->direction['w']; 
+  player["direction"]["down"]  = this->direction['s'];
+  player["direction"]["left"]  = this->direction['a'];
+  player["direction"]["right"] = this->direction['d'];
+  return player;
+}
+
+Square Player::getPosition() {
+  return this->position;
+}
+
+RGB Player::getColor() {
+  return this->color;
 }

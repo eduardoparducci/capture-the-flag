@@ -62,11 +62,6 @@ bool Client::sendString(string data) {
     return false;
   }
   cout << "Success!" << endl;
-
-  // Testing JSON library
-  nlohmann::json data_json;
-  data_json["data"] = data;
-  cout << data_json.dump(4) << endl;
   return true;
 }
 

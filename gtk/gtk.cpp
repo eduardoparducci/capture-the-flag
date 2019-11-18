@@ -1,23 +1,17 @@
 #include "gtk.hpp"
 
-// Needs to be static because glut library has no access to internal GTK members
 static Gtk *gtk;
 
 /*===== CALLBACKS =====*/
-// Need to be global function because because glut has no access to local methods
-
 void keyboardPressDownCallback(unsigned char key, int x, int y) {
-  //cout << "Key down callback!" << endl;
   gtk->updateKeys(key, true);
 }
 
 void keyboardPressUpCallback(unsigned char key, int x, int y) {
-  //cout << "Key up callback!" << endl;
   gtk->updateKeys(key, false);
 }
 
 void frameCallback() {
-  //cout << "Frame callback!" << endl;
   gtk->frameHandler();
 }
 
@@ -26,7 +20,6 @@ void timerCallback(int i) {
 }
 
 void resizeWindowCallback(GLsizei w, GLsizei h) {
-  //cout << "Resize callback!" << endl;
   gtk->resizeWindowHandler(w,h);
 }
 
@@ -34,10 +27,12 @@ void resizeWindowCallback(GLsizei w, GLsizei h) {
 
 // Resize window item according to window size
 void Gtk::resizeWindowHandler(GLsizei w, GLsizei h) {
+
   // Viewport size
   this->width = w;
   this->height = h;
   glViewport(0, 0, this->width, this->height);
+
   // coordinate system init
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
@@ -102,7 +97,7 @@ void Gtk::drawPlayer() {
   glutBitmapString(GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char *)(this->client->getPlayer()->getName().c_str()));
 }
 
-// Draw player
+// Draw Obstacles
 void Gtk::drawObstacles() {
 
   vector<Obstacle *> *o = this->client->getObstacleList()->getObstacles();
@@ -126,7 +121,7 @@ void Gtk::drawMap() {
   Square s = this->client->getMap()->getBoundaries();
   RGB color = this->client->getPlayer()->getColor();
   
-  glLineWidth(4.0f); //width of line
+  glLineWidth(4.0f);
   glBegin(GL_LINE_LOOP);
 	glColor3f(0.0f, 0.0f, 0.0f);
 	glVertex2i(s.x_min,s.y_min);
@@ -135,7 +130,7 @@ void Gtk::drawMap() {
 	glVertex2i(s.x_max,s.y_min);
   glEnd();
 
-  // Basis
+  // Basis (transparent area)
   glColor4f(color.r, color.g, color.b, 0.25f); // Color
   s = this->client->getMap()->getBasis();
   glBegin(GL_QUADS);
@@ -160,12 +155,8 @@ void Gtk::drawInfo() {
 void Gtk::timeHandler() {
   string data = this->client->getString();
   if(data.length()) {
-    string Xmax(&data[data.find("a")+1],&data[data.find("b")-1]);
-    string Ymax(&data[data.find("b")+1],&data[data.find("c")-1]);
-    string Xmin(&data[data.find("c")+1],&data[data.find("d")-1]);
-    string Ymin(data.substr(data.find("d")+1));
-    Square s = {stof(Xmax),stof(Ymax),stof(Xmin),stof(Ymin)};
-    this->client->getPlayer()->update(s);
+    json info = json::parse(data);
+    this->client->getPlayer()->update(info);
   }
   glutPostRedisplay();
   glutTimerFunc(20, timerCallback, 1);
@@ -197,8 +188,6 @@ void Gtk::init(int argc, char **argv, Client *c) {
   cout << "GTK: Keyup callback created!" << endl;
   glutTimerFunc(33, timerCallback, 1);
   cout << "GTK: Time callback created!" << endl;
-  //thread newthread(timerThread, &(this->client));
-  //(this->time_thread).swap(newthread);
   
   glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
   glMatrixMode(GL_PROJECTION);
@@ -213,11 +202,9 @@ void Gtk::init(int argc, char **argv, Client *c) {
 
 // Update keys
 void Gtk::updateKeys(char key, bool is_pressed) {
-  cout << "Update keys called" << endl;
+  cout << "GTK: Update keys called" << endl;
   if(key!='a' && key!='w' && key!='s' && key!='d') return;
-  static string c(1,key);
-  json data;
-  data[c] = is_pressed;
-  cout << "Updating keys with following JSON:" << endl << data.dump(4) << endl;
-  this->client->sendString(data.dump());
+  Player *p = this->client->getPlayer();
+  p->setDirection(key, is_pressed);
+  this->client->sendString(p->toJson().dump());
 }

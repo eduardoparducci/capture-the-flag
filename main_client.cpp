@@ -14,8 +14,8 @@ int main(int argc, char **argv) {
   Obstacle *o0 = new Obstacle ({30.0f, 30.0f, 20.0f, 20.0f},{0,0,0});
   Obstacle *o1 = new Obstacle ({30.0f, -30.0f, 20.0f, -40.0f},{0,0,0});
   ObstacleList *obs = new ObstacleList();
-  Player *player = new Player(0.0f, 0.0f, 7.0f, 5.0f, "Eduardo", {1.0f, 0.0f, 0.0f});
-  Client *client = new Client(3001, "127.0.0.1", 200);
+  Player *player = new Player(0.0f, 0.0f, 7.0f, 5.0f, "Eduardo", {1.0f, 0.0f, 0.0f}, 0);
+  Client *client = new Client(3001, "127.0.0.1", 2000);
   Gtk *gtk = new Gtk();
   string server_data;
 

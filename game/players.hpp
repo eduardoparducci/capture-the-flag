@@ -14,21 +14,21 @@ private:
   Square position;
   RGB color;
   string name;
+  unsigned id;
   map<char, bool> direction;
-  json directionJson;
 
 public:
-  Player(float x, float y, float height, float width, string name, RGB color);
-  void update(Square p);
+  Player(float x, float y, float height, float width, string name, RGB color, unsigned id);
+  void setId(unsigned id);
+  void update(json p);
   void resize(Square position);
   void toString();
   void setDirection(char c, bool value);
-  void setDirectionJson(json movement);
   string getName();
   string serialize();
-  string toJson();  
-  json getDirectionJson();
+  unsigned getId();
   map<char, bool> getDirection();
+  json toJson();
   Square getPosition();
   RGB getColor();
 };
