@@ -1,10 +1,14 @@
 #ifndef GTK_HPP
 #define GTK_HPP
 
-#include "client.hpp"
-#include <map>
-#include <unistd.h>
-#include "opt/include/GL/glut.h"
+// external libraries
+#include "../libraries.hpp"
+#include "../game/players.hpp"
+#include "../network/client.hpp"
+#include "../data/json.hpp"
+
+using json = nlohmann::json;
+using namespace std;
 
 class Gtk {
 private:
@@ -20,14 +24,13 @@ private:
 
   // Keyboard info
   std::map<char, bool> pressed_keys;
-
+  json keys;
+  
 public:
   void init(int argc, char **argv, Client *c);
   void frameHandler();
   void timeHandler();
   void resizeWindowHandler(GLsizei w, GLsizei h);
-  GLfloat getX();
-  GLfloat getY();
   void setX(GLfloat x);
   void setY(GLfloat y);
   void updateKeys(char key, bool is_pressed);
@@ -37,6 +40,8 @@ public:
   void drawInfo();
   void gridOn();
   void update();
+  GLfloat getX();
+  GLfloat getY();
 };
 #endif
 
