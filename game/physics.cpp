@@ -3,64 +3,43 @@
  */
 #include "physics.hpp"
 
+using namespace std;
+using json = nlohmann::json;
+
 Physics::Physics(Player *player, Map *map, ObstacleList *obstacles) {
    this->player = player;
    this->map = map;
    this->obstacles = obstacles;
  }
 
-void Physics::update(char key, bool value) {
-  this->player->setDirection(key, value);
-  Square s = this->player->getPosition();
-  ::map<char, bool> d = this->player->getDirection();
-  if(d['a']) {
-    s.x_min -= 0.8;
-    s.x_max -= 0.8;
-  }
-  if(d['d']) {
-    s.x_min += 0.8;
-    s.x_max += 0.8;
-  }
-  if(d['w']) {
-    s.y_min += 0.8;
-    s.y_max += 0.8;
-  }
-  if(d['s']) {
-    s.y_min -= 0.8;
-    s.y_max -= 0.8;
-  }
-  if(this->map->isValid(s) && !this->obstacles->hit(s)) {
-    json direction;
-    direction["up"
-    this->player->update(s);
-  }
-}
+void Physics::update(json state) {
 
-void Physics::updateJson(json movement) {
-  this->player->setDirectionJson(movement);
+  // Update keys pressed in current state
+  this->player->setDirection(state["keys"]);
+
+  // Calculate new position using recently stored keys state
   Square s = this->player->getPosition();
-  nlohmann::json d = this->player->getDirectionJson();
-  //map<char, bool> d = this->player->getDirection();
-  if(d.value("a",false)) {
+  if(state["keys"]["a"].get<bool>()) {
     s.x_min -= 0.8;
     s.x_max -= 0.8;
   }
-  if(d.value("d",false)) {
+  if(state["keys"]["d"].get<bool>()) {
     s.x_min += 0.8;
     s.x_max += 0.8;
   }
-  if(d.value("w",false)) {
+  if(state["keys"]["w"].get<bool>()) {
     s.y_min += 0.8;
     s.y_max += 0.8;
   }
-  if(d.value("s",false)) {
+  if(state["keys"]["s"].get<bool>()) {
     s.y_min -= 0.8;
     s.y_max -= 0.8;
   }
+
+  // Verify validity and store new position
   if(this->map->isValid(s) && !this->obstacles->hit(s)) {
-    // cout << "Player position: (" << s.y_max << "," << s.x_max << ")" << endl; 
     this->player->update(s);
-  } // else cout << "Player blocked at: (" << s.y_max << "," << s.x_max << ")" << endl;
+  }
 }
 
 Player *Physics::getPlayer(){

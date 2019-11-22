@@ -31,14 +31,14 @@ private:
   int buffer_size;
   char *buffer;
   unsigned int gate;
-  std::string ip;
-  std::thread pkg_thread;
+  string ip;
+  thread pkg_thread;
 
 public:
 	Client(unsigned int gate, string ip, int buffer_size);
 	bool init(Player *player, Map *map, ObstacleList *obstacles);
-  string getString();
-	bool sendString(string data);
+  json getPackage();
+	bool sendPackage(string data);
   bool getBufferStatus();
   void cclose();
   Player *getPlayer();

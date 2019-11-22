@@ -36,10 +36,9 @@ public:
   bool init(Physics *physics);
   void sclose();
   void slisten();
-  string get_string();
-  bool send_string(string data);
-  void updateGame(string movement);
-  void updateGameJson(json movement);
+  json getPackage();
+  bool sendPackage(string data);
+  void updateGame(json state);
 };
 
 #endif

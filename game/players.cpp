@@ -1,5 +1,8 @@
 #include "players.hpp"
 
+using namespace std;
+using json = nlohmann::json;
+
 Player::Player(float x, float y, float height, float width, string name, RGB color, unsigned id) {
   this->name = name;
   this->id = id;
@@ -24,15 +27,18 @@ void Player::resize(Square p) {
   this->position = p;
 }
 
-void Player::update(json p) {
-  this->position.x_max = p.at("x_max");
-  this->position.x_max = p.at("y_max");
-  this->position.x_max = p.at("x_min");
-  this->position.x_max = p.at("y_min");
+void Player::update(Square p) {
+  this->position.x_max = p.x_max;
+  this->position.y_max = p.y_max;
+  this->position.x_min = p.x_min;
+  this->position.y_min = p.y_min;
 }
 
-void Player::setDirection(char c, bool value) {
-  this->direction[c] = value;
+void Player::setDirection(json keys) {
+  this->direction['a'] = keys["a"].get<bool>();
+  this->direction['w'] = keys["w"].get<bool>();
+  this->direction['s'] = keys["s"].get<bool>();
+  this->direction['d'] = keys["d"].get<bool>();
 }
 
 void Player::toString() {
@@ -49,16 +55,15 @@ string Player::getName() {
   return this->name;
 }
 
-string Player::serialize() {
-  string data("a");
-  data.append(to_string(this->position.x_max));
-  data.append("b");
-  data.append(to_string(this->position.y_max));
-  data.append("c");
-  data.append(to_string(this->position.x_min));
-  data.append("d");
-  data.append(to_string(this->position.y_min));
-  return data;
+json Player::serialize() {
+  json player;
+  player["id"] = this->id;
+  player["name"] = this->name;
+  player["position"]["x_max"] = this->position.x_max;
+  player["position"]["x_min"] = this->position.x_min;
+  player["position"]["y_max"] = this->position.y_max;
+  player["position"]["y_min"] = this->position.y_min;
+  return player;
 }
 
 unsigned Player::getId() {
@@ -67,21 +72,6 @@ unsigned Player::getId() {
 
 map<char,bool> Player::getDirection() {
   return this->direction;
-}
-
-json Player::toJson() {
-  json player;
-  player["id"] = this->id;
-  player["name"] = this->name;
-  player["position"]["x_max"]  = this->position.x_max;
-  player["position"]["x_min"]  = this->position.x_min;
-  player["position"]["y_max"]  = this->position.y_max;
-  player["position"]["y_min"]  = this->position.y_min;
-  player["direction"]["up"]    = this->direction['w']; 
-  player["direction"]["down"]  = this->direction['s'];
-  player["direction"]["left"]  = this->direction['a'];
-  player["direction"]["right"] = this->direction['d'];
-  return player;
 }
 
 Square Player::getPosition() {

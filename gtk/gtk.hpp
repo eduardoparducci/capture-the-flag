@@ -24,7 +24,8 @@ private:
 
   // Keyboard info
   std::map<char, bool> pressed_keys;
-
+  json keys;
+  
 public:
   void init(int argc, char **argv, Client *c);
   void frameHandler();

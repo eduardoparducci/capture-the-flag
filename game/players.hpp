@@ -20,15 +20,14 @@ private:
 public:
   Player(float x, float y, float height, float width, string name, RGB color, unsigned id);
   void setId(unsigned id);
-  void update(json p);
+  void update(Square p);
   void resize(Square position);
   void toString();
-  void setDirection(char c, bool value);
+  void setDirection(json keys);
   string getName();
-  string serialize();
+  json serialize();
   unsigned getId();
   map<char, bool> getDirection();
-  json toJson();
   Square getPosition();
   RGB getColor();
 };

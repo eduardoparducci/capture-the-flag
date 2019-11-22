@@ -1,5 +1,4 @@
 #include "libraries.hpp"
-
 #include "game/map.hpp"
 #include "game/obstacles.hpp"
 #include "game/players.hpp"
@@ -18,10 +17,8 @@ int main() {
   ObstacleList *obs = new ObstacleList();
   Physics *physics;
   Player *player = new Player(0.0f, 0.0f, 7.0f, 5.0f, "Eduardo", {1.0f, 0.0f, 0.0f}, 0);
-  Server *server = new Server(3001,"127.0.0.1", 200);
-  string server_data, client_data;
-
-  json json_client_data;
+  Server *server = new Server(3001,"127.0.0.1", 2000);
+  json client_data, last_client_data;
   
   obs->add_obstacle(o0);
   obs->add_obstacle(o1);
@@ -31,11 +28,12 @@ int main() {
   server->slisten();
 
   while(1) {
-    client_data = server->get_string();
-    if(client_data.length()) {
-      cout << endl << "Client data: " << client_data << endl;
+    client_data = server->getPackage();
+    if(!client_data.empty()) {
+      last_client_data = client_data;
     }
-    std::this_thread::sleep_for (std::chrono::milliseconds(10));
+    server->updateGame(last_client_data);
+    std::this_thread::sleep_for (std::chrono::milliseconds(20));
   }
   server->sclose();
   return 0;

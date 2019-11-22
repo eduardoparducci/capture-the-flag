@@ -139,8 +139,6 @@ void Gtk::drawMap() {
   glVertex2i(s.x_max,s.y_max);
   glVertex2i(s.x_max,s.y_min);
   glEnd();
-
-
 }
 
 // Draw info at the bottom of the screen
@@ -153,12 +151,26 @@ void Gtk::drawInfo() {
 
 // Update position every 20ms
 void Gtk::timeHandler() {
-  string data = this->client->getString();
-  if(data.length()) {
-    json info = json::parse(data);
-    this->client->getPlayer()->update(info);
+
+  json data = this->client->getPackage();
+
+  // Check if data has content
+  if(!data.empty()) {
+
+    // Parse data from JSON to Square
+    Square s{
+             data["position"]["x_max"].get<float>(),
+             data["position"]["y_max"].get<float>(),
+             data["position"]["x_min"].get<float>(),
+             data["position"]["y_min"].get<float>()
+    };
+
+    //Update player's position and update frame
+    this->client->getPlayer()->update(s);
+    glutPostRedisplay();
   }
-  glutPostRedisplay();
+  
+  // Set new callback
   glutTimerFunc(20, timerCallback, 1);
 }
 
@@ -172,6 +184,10 @@ void Gtk::init(int argc, char **argv, Client *c) {
   this->width = 700;
   this->client = c;
   this->s = this->client->getPlayer()->getPosition();
+  this->keys["a"] = false;
+  this->keys["w"] = false;
+  this->keys["s"] = false;
+  this->keys["d"] = false;
   glutInit(&argc,argv);
   glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
   glutInitWindowSize(this->width,this->height);
@@ -202,9 +218,38 @@ void Gtk::init(int argc, char **argv, Client *c) {
 
 // Update keys
 void Gtk::updateKeys(char key, bool is_pressed) {
-  cout << "GTK: Update keys called" << endl;
-  if(key!='a' && key!='w' && key!='s' && key!='d') return;
-  Player *p = this->client->getPlayer();
-  p->setDirection(key, is_pressed);
-  this->client->sendString(p->toJson().dump());
+
+  Player *p;
+  json data;
+  
+  switch(key) {
+  case 'a':
+    if(is_pressed) this->keys["a"] = true;
+    else this->keys["a"] = false;
+    break;
+  case 'w':
+    if(is_pressed) this->keys["w"] = true;
+    else this->keys["w"] = false;
+    break;
+  case 's':
+    if(is_pressed) this->keys["s"] = true;
+    else this->keys["s"] = false;
+    break;
+  case 'd':
+    if(is_pressed) this->keys["d"] = true;
+    else this->keys["d"] = false;
+    break;
+  default:
+    cout << "GTK: Invalid key pressed!" << endl;
+    return;
+  }
+
+  p = this->client->getPlayer();
+  p->setDirection(this->keys);
+
+  data = p->serialize();
+  data["keys"] = this->keys;
+  cout << "GTK: new key signal:" << endl;
+  cout << data.dump(4) << endl;
+  this->client->sendPackage(data.dump());
 }

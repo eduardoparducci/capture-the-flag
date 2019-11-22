@@ -21,6 +21,7 @@ Client::Client(unsigned int gate, string ip, int buffer_size) {
   this->buffer = (char *)malloc(buffer_size * sizeof(char));
   cout << "Buffer created with " << buffer_size << "bytes" << endl;  
 
+  // Client settings
   this->ip = ip;
   this->target.sin_family = AF_INET;
   this->target.sin_port = htons(gate);
@@ -33,8 +34,8 @@ bool Client::init(Player *player, Map *map, ObstacleList *obstacles) {
   this->player = player;
   this->map = map;
   this->obstacles = obstacles;
+  
   cout << "Trying to connect on gate:" << this->gate << " ip:" << this->ip << endl;
-
   if (connect(this->socket_fd, (struct sockaddr*)&target, sizeof(target)) != 0) {
     cout << "Problems occured, exiting..." << endl;
     return false;
@@ -55,13 +56,13 @@ void Client::cclose() {
   close(socket_fd);
 }
 
-bool Client::sendString(string data) {
-  cout << "Sending:"<< data << " ... ";
+bool Client::sendPackage(string data) {
+  //cout << "Client: Sending:"<< data << " ... ";
   if(send(this->socket_fd, data.c_str(), data.size()+1, 0) < 0) {
-    cout << "Error!" << endl;
+    //cout << "Error!" << endl;
     return false;
   }
-  cout << "Success!" << endl;
+  //cout << "Success!" << endl;
   return true;
 }
 
@@ -77,13 +78,14 @@ Map *Client::getMap() {
   return this->map;
 }
 
-string Client::getString() {
-  if(this->buffer_status==FREE) {
-    return "";
+json Client::getPackage() {
+  json pkg;
+  if(this->buffer_status == BUSY) {
+    string buffer_copy(this->buffer);
+    pkg = json::parse(buffer_copy);  
+    this->buffer_status = FREE;
   }
-  string data(this->buffer);
-  this->buffer_status = FREE;
-  return data;  
+  return pkg;
 }
 
 bool Client::getBufferStatus() {

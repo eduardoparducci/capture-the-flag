@@ -7,13 +7,12 @@ void wait_package(char **buffer, int buffer_size, bool *buffer_status, bool *run
       recv(connection_fd, *buffer, buffer_size, 0);
       *buffer_status = BUSY;
     }
-    // ADJUST TO 10ms LATER
-    std::this_thread::sleep_for (std::chrono::milliseconds(10));
+    this_thread::sleep_for (chrono::milliseconds(10));
   }
   return;
 }
 
-Server::Server(unsigned int gate, std::string ip, unsigned int buffer_size) {
+Server::Server(unsigned int gate, string ip, unsigned int buffer_size) {
   // Buffer setup
   this->buffer_size = buffer_size;
   this->buffer_status = FREE;
@@ -26,7 +25,7 @@ Server::Server(unsigned int gate, std::string ip, unsigned int buffer_size) {
   this->ip = ip;
   socket_fd = socket(AF_INET, SOCK_STREAM, 0);
   
-  std::cout << "Socket created " << std::endl;
+  cout << "Server: socket created " << endl;
 }
 
 bool Server::init(Physics *physics) {
@@ -38,13 +37,12 @@ bool Server::init(Physics *physics) {
   this->myself.sin_port = htons(this->gate); //gate
   inet_aton(this->ip.c_str(), &(this->myself.sin_addr)); //address
 
-  std::cout << "Trying to open gate " << this->gate <<std::endl;
-
+  cout << "Server: trying to open gate " << this->gate <<endl;
   if (bind(this->socket_fd, (struct sockaddr*)&this->myself, sizeof(this->myself)) != 0) {
-    std::cout << "Problems occured, exiting..." << std::endl;
+    cout << "Server: problems occured, exiting..." << endl;
     return false;
   }
-  std::cout << "Opened gate "<< this->gate << " successfully!" << std::endl;
+  cout << "Server: opened gate "<< this->gate << " successfully!" << endl;
   return true;
 }
 
@@ -57,49 +55,44 @@ void Server::sclose() {
 
 void Server::slisten() {
   listen(this->socket_fd, 2);
-  std::cout << "Listening on gate " << this->gate << std::endl;
-  std::cout << "Waiting..." << std::endl;
+  cout << "Server: listening on gate " << this->gate << endl;
+  cout << "Server: waiting..." << endl;
   this->connection_fd = accept(this->socket_fd, (struct sockaddr*)&this->client, &this->client_size);
   this->running = true;
-  std::thread newthread(wait_package, &(this->buffer), this->buffer_size, &(this->buffer_status), &(this->running), this->connection_fd);
+  thread newthread(wait_package, &(this->buffer), this->buffer_size, &(this->buffer_status), &(this->running), this->connection_fd);
   (this->pkg_thread).swap(newthread);
 }
 
-std::string Server::get_string() {
-  if(this->buffer_status==FREE) return "";
-  std::string data(this->buffer);
-  this->buffer_status = FREE;
-  //std::cout << "Got some data" << std::endl;
-  return this->buffer;  
+json Server::getPackage() {
+  json pkg;
+  if(this->buffer_status==BUSY) {
+    string buffer_copy(this->buffer);
+    pkg = json::parse(buffer_copy);
+    this->buffer_status = FREE;
+    cout << "Server: new key signal received:" << endl;
+    cout << pkg.dump(4) << endl;
+  }
+  return pkg;
 }
 
-bool Server::send_string(string data) {
-  // std::cout << "Sending:"<< data << " ... ";
+bool Server::sendPackage(string data) {
   if(send(this->connection_fd, data.c_str(), data.size()+1, 0) < 0) {
-    // std::cout << "Error!" << std::endl;
     return false;
   }
-  // std::cout << "Success!" << std::endl;
   return true;
 }
 
-void Server::updateGame(string movement) {
-  //std::cout << "Updating server physics ... ";
-  if(movement.length()) this->physics->update(movement.at(0) , movement.at(1)=='+'? true : false);
-  else this->physics->update(' ',false);
-  //std::cout << "Done!" << std::endl;
-  std::string data = this->physics->getPlayer()->serialize();
-  //std::cout << "Serialized data to send:" << data << std::endl;
-  this->send_string(data);
-}
+void Server::updateGame(json state) {
+  // Checking empy state
+  if(state.empty()) {
+    cout << "Server: nothing to do, returning." << endl;
+    return;
+  }
 
-void Server::updateGameJson(json movement) {
-  std::cout << "Updating server physics with JSON... ";
-  this->physics->updateJson(movement);
-  std::cout << "Done!" << std::endl;
-  
-  std::string data = this->physics->getPlayer()->serialize();
-  //std::cout << "Serialized data to send:" << data << std::endl;
-  this->send_string(data);
-}
+  // Updating physics
+  this->physics->update(state);
 
+  // Broadcasting result
+  json new_state = this->physics->getPlayer()->serialize();
+  sendPackage(new_state.dump());
+}

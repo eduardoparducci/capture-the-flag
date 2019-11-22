@@ -17,7 +17,6 @@ int main(int argc, char **argv) {
   Player *player = new Player(0.0f, 0.0f, 7.0f, 5.0f, "Eduardo", {1.0f, 0.0f, 0.0f}, 0);
   Client *client = new Client(3001, "127.0.0.1", 2000);
   Gtk *gtk = new Gtk();
-  string server_data;
 
   obs->add_obstacle(o0);
   obs->add_obstacle(o1);

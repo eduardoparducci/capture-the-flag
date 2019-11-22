@@ -26,8 +26,7 @@ private:
 public:
   Physics(Player *player, Map *map, ObstacleList *obstacles);
   Player *getPlayer();
-  void update(char key, bool value);
-  void updateJson(json movement);
+  void update(json state);
 };
 
 #endif
