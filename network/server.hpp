@@ -16,11 +16,11 @@ class Server {
 private:
   // Game info
   Physics *physics;
+  bool running;
 
   // Connection info
   int socket_fd;
   int connection_fd;
-  bool running;
   bool buffer_status;
   int buffer_size;
   char *buffer;
@@ -38,7 +38,9 @@ public:
   void slisten();
   json getPackage();
   bool sendPackage(string data);
+  bool addClient(json data);
   void updateGame(json state);
+  Physics *getPhysics();
 };
 
 #endif

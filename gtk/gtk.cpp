@@ -76,25 +76,33 @@ void Gtk::gridOn() {
 
 // Draw player
 void Gtk::drawPlayer() {
-  //Square s = this->s;
-  RGB color = this->client->getPlayer()->getColor();
-  Square s = this->client->getPlayer()->getPosition();
 
-  // Cofigure player appearence
-  glColor3f(color.r, color.g, color.b); // Color
+  vector<Player *> *pl = this->client->getPlayerList()->getPlayers();
+  Square s;
+  RGB color;
+  // Iterate every player
+  for (int i = 0 ; i < (int)(*pl).size() ; i++) {
 
-  // Draw dots on the screen
-  glBegin(GL_QUADS);
-  glVertex2i(s.x_min,s.y_min);
-  glVertex2i(s.x_min,s.y_max);
-  glVertex2i(s.x_max,s.y_max);
-  glVertex2i(s.x_max,s.y_min);
-  glEnd();
+    // Update position
+    s = (*pl)[i]->getPosition();
 
-  // Player name
-  glRasterPos2i(s.x_min, s.y_max+2);
-  glColor3f(0.0f, 0.0f, 0.0f);
-  glutBitmapString(GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char *)(this->client->getPlayer()->getName().c_str()));
+    // Cofigure player appearence
+    color = (*pl)[i]->getColor();
+    glColor3f(color.r, color.g, color.b); // Color
+
+    // Draw dots on the screen
+    glBegin(GL_QUADS);
+    glVertex2i(s.x_min,s.y_min);
+    glVertex2i(s.x_min,s.y_max);
+    glVertex2i(s.x_max,s.y_max);
+    glVertex2i(s.x_max,s.y_min);
+    glEnd();
+    
+    // Player name
+    glRasterPos2i(s.x_min, s.y_max+2);
+    glColor3f(0.0f, 0.0f, 0.0f);
+    glutBitmapString(GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char *)((*pl)[i]->getName().c_str()));
+  }
 }
 
 // Draw Obstacles
@@ -119,7 +127,6 @@ void Gtk::drawObstacles() {
 // Draw map
 void Gtk::drawMap() {
   Square s = this->client->getMap()->getBoundaries();
-  RGB color = this->client->getPlayer()->getColor();
   
   glLineWidth(4.0f);
   glBegin(GL_LINE_LOOP);
@@ -131,7 +138,7 @@ void Gtk::drawMap() {
   glEnd();
 
   // Basis (transparent area)
-  glColor4f(color.r, color.g, color.b, 0.25f); // Color
+  glColor4f(1.0f, 0.0f, 0.0f, 0.25f); // Color
   s = this->client->getMap()->getBasis();
   glBegin(GL_QUADS);
   glVertex2i(s.x_min,s.y_min);
@@ -146,7 +153,7 @@ void Gtk::drawInfo() {
   glRasterPos2i(-this->win+3, -this->win+3);
   glColor3f(0.0f, 0.0f, 0.0f);
   glutBitmapString(GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char *)"Player: ");
-  glutBitmapString(GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char *)this->client->getPlayer()->getName().c_str());
+  glutBitmapString(GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char *)this->client->getMyself()->getName().c_str());
 }
 
 // Update position every 20ms
@@ -156,17 +163,9 @@ void Gtk::timeHandler() {
 
   // Check if data has content
   if(!data.empty()) {
-
-    // Parse data from JSON to Square
-    Square s{
-             data["position"]["x_max"].get<float>(),
-             data["position"]["y_max"].get<float>(),
-             data["position"]["x_min"].get<float>(),
-             data["position"]["y_min"].get<float>()
-    };
-
-    //Update player's position and update frame
-    this->client->getPlayer()->update(s);
+    
+    //Update players positions and update frame
+    this->client->getPlayerList()->update(data["players"]);
     glutPostRedisplay();
   }
   
@@ -183,7 +182,6 @@ void Gtk::init(int argc, char **argv, Client *c) {
   this->height = 500;
   this->width = 700;
   this->client = c;
-  this->s = this->client->getPlayer()->getPosition();
   this->keys["a"] = false;
   this->keys["w"] = false;
   this->keys["s"] = false;
@@ -244,7 +242,7 @@ void Gtk::updateKeys(char key, bool is_pressed) {
     return;
   }
 
-  p = this->client->getPlayer();
+  p = this->client->getMyself();
   p->setDirection(this->keys);
 
   data = p->serialize();

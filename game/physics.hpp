@@ -20,13 +20,20 @@ using namespace std;
 
 class Physics {
 private:
-  Player *player;
+  PlayerList *players;
   Map *map;
   ObstacleList *obstacles;
+  bool running;
+  
 public:
-  Physics(Player *player, Map *map, ObstacleList *obstacles);
-  Player *getPlayer();
+  Physics(Map *map, ObstacleList *obstacles);
+  PlayerList *getPlayers();
+  Map *getMap();
+  ObstacleList *getObstacles();
+  unsigned addPlayer(string name);
   void update(json state);
+  void start();
+  void stop();
 };
 
 #endif

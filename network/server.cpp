@@ -56,7 +56,7 @@ void Server::sclose() {
 void Server::slisten() {
   listen(this->socket_fd, 2);
   cout << "Server: listening on gate " << this->gate << endl;
-  cout << "Server: waiting..." << endl;
+  cout << "Server: waiting packages..." << endl;
   this->connection_fd = accept(this->socket_fd, (struct sockaddr*)&this->client, &this->client_size);
   this->running = true;
   thread newthread(wait_package, &(this->buffer), this->buffer_size, &(this->buffer_status), &(this->running), this->connection_fd);
@@ -69,7 +69,7 @@ json Server::getPackage() {
     string buffer_copy(this->buffer);
     pkg = json::parse(buffer_copy);
     this->buffer_status = FREE;
-    cout << "Server: new key signal received:" << endl;
+    cout << "Server: received:" << endl;
     cout << pkg.dump(4) << endl;
   }
   return pkg;
@@ -80,6 +80,25 @@ bool Server::sendPackage(string data) {
     return false;
   }
   return true;
+}
+
+bool Server::addClient(json data) {
+    json game_state;
+    
+    cout << "Server: player " << data["name"].dump() << " joined the server." << endl;
+
+    // Create game state package to send to the client
+    game_state["id"] = this->physics->addPlayer(data["name"].get<string>());
+    game_state["players"] = this->physics->getPlayers()->serialize();
+    game_state["map"] = this->physics->getMap()->serialize();
+    game_state["obstacles"] = this->physics->getObstacles()->serialize();
+
+    // Sending confirmation to client
+    cout << "Server: replying game: " << endl;
+    cout << game_state.dump(4) << endl;
+    sendPackage(game_state.dump());
+
+    return true;
 }
 
 void Server::updateGame(json state) {
@@ -93,6 +112,11 @@ void Server::updateGame(json state) {
   this->physics->update(state);
 
   // Broadcasting result
-  json new_state = this->physics->getPlayer()->serialize();
+  json new_state;
+  new_state["players"] = this->physics->getPlayers()->serialize();
   sendPackage(new_state.dump());
+}
+
+Physics *Server::getPhysics() {
+  return this->physics;
 }

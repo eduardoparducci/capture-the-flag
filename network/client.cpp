@@ -19,7 +19,7 @@ Client::Client(unsigned int gate, string ip, int buffer_size) {
   this->buffer_size = buffer_size;
   this->buffer_status = FREE;
   this->buffer = (char *)malloc(buffer_size * sizeof(char));
-  cout << "Buffer created with " << buffer_size << "bytes" << endl;  
+  cout << "Client: buffer created with " << buffer_size << "bytes" << endl;  
 
   // Client settings
   this->ip = ip;
@@ -27,26 +27,64 @@ Client::Client(unsigned int gate, string ip, int buffer_size) {
   this->target.sin_port = htons(gate);
   inet_aton(ip.c_str(), &(this->target.sin_addr));
 
-  cout << "Socket created " << endl;
+  cout << "Client: socket created " << endl;
 }
 
-bool Client::init(Player *player, Map *map, ObstacleList *obstacles) {
-  this->player = player;
-  this->map = map;
-  this->obstacles = obstacles;
+bool Client::init(string player_name) {
   
-  cout << "Trying to connect on gate:" << this->gate << " ip:" << this->ip << endl;
+  json client_info;
+  json server_response;
+  unsigned timeout = 0;
+
+  // Creating connection to server and launch thread for fetching packages
+  cout << "Client: trying to connect on gate:" << this->gate << " ip:" << this->ip << endl;
   if (connect(this->socket_fd, (struct sockaddr*)&target, sizeof(target)) != 0) {
-    cout << "Problems occured, exiting..." << endl;
+    cout << "Client: ERROR stablishing connection, exiting..." << endl;
     return false;
   }
-  cout << "Connection stablished!" << endl;
+  cout << "Client: connection stablished!" << endl;
   this->running = true;
   thread newthread(wait_package, &(this->buffer), this->buffer_size, &(this->buffer_status), &(this->running), this->socket_fd);
   (this->pkg_thread).swap(newthread);
   
-  cout << "Adding player: " <<  player->getName() << "(Not implemented yet)" << endl;
+  // Creating package and sending to server
+  cout << "Client: adding player: " <<  player_name << endl;
+  client_info["name"] = player_name;
+  client_info["init"] = true;
+  sendPackage(client_info.dump());
+
+  // Waiting for server response with timeout
+  do {
+    std::this_thread::sleep_for (std::chrono::milliseconds(100));
+    server_response = getPackage();
+    timeout++;
+  } while(server_response.empty() && timeout<100);
+
+  // Verify if timeout occured without a response
+  if(server_response.empty()) {
+    cout << "Client: ERROR initial config with server took too long." << endl;
+    return false;
+  } else {
+    cout << "Client: player added successfully." << endl;
+    this->id = server_response["id"].get<unsigned>();
+    this->players = new PlayerList(server_response["players"]);
+    this->myself = this->players->getPlayer(this->id);
+    this->map = new Map(server_response["map"]);
+    this->obstacles = new ObstacleList(server_response["obstacles"]);
+  }
+
+  // Log game status
+  cout << "Obstacles: " << endl << this->obstacles->serialize().dump(4) << endl;
+  cout << "Map: " << endl << this->map->serialize().dump(4) << endl;
+  cout << "Players: " << endl << this->players->serialize().dump(4) << endl;
+  cout << "I am: " << endl;
+  this->myself->toString();
+  
   return true;
+}
+
+Player *Client::getMyself() {
+  return this->myself;
 }
 
 void Client::cclose() {
@@ -57,17 +95,18 @@ void Client::cclose() {
 }
 
 bool Client::sendPackage(string data) {
-  //cout << "Client: Sending:"<< data << " ... ";
   if(send(this->socket_fd, data.c_str(), data.size()+1, 0) < 0) {
-    //cout << "Error!" << endl;
     return false;
   }
-  //cout << "Success!" << endl;
   return true;
 }
 
-Player *Client::getPlayer() {
-  return this->player;
+PlayerList *Client::getPlayerList() {
+  return this->players;
+}
+
+unsigned Client::getId() {
+  return this->id;
 }
 
 ObstacleList *Client::getObstacleList() {

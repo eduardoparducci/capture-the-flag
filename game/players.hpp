@@ -19,6 +19,7 @@ private:
 
 public:
   Player(float x, float y, float height, float width, string name, RGB color, unsigned id);
+  Player(json player);
   void setId(unsigned id);
   void update(Square p);
   void resize(Square position);
@@ -31,4 +32,19 @@ public:
   Square getPosition();
   RGB getColor();
 };
+
+class PlayerList {
+private:
+  vector<Player *> *players;
+
+public:
+  PlayerList();
+  PlayerList(json players);
+  unsigned addPlayer(Player *p);
+  json serialize();
+  vector<Player*> *getPlayers();
+  Player *getPlayer(unsigned id);
+  void update(json players);
+};
+
 #endif

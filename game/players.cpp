@@ -19,6 +19,27 @@ Player::Player(float x, float y, float height, float width, string name, RGB col
   this->position.x_min = x-width/2;
 }
 
+Player::Player(json player) {
+  cout << "Player: creating player from JSON" << endl;
+  this->name = player["name"].get<string>();
+  this->id = player["id"].get<unsigned>();
+  this->direction['a'] = false;
+  this->direction['w'] = false;
+  this->direction['s'] = false;
+  this->direction['d'] = false;
+  this->position = {
+                    player["position"]["x_max"].get<float>(),
+                    player["position"]["y_max"].get<float>(),
+                    player["position"]["x_min"].get<float>(),
+                    player["position"]["y_min"].get<float>()
+  };
+  this->color = {
+                 player["color"]["r"].get<float>(),
+                 player["color"]["g"].get<float>(),
+                 player["color"]["b"].get<float>()
+  };
+}
+
 void Player::setId(unsigned id) {
   this->id = id;
 }
@@ -63,6 +84,10 @@ json Player::serialize() {
   player["position"]["x_min"] = this->position.x_min;
   player["position"]["y_max"] = this->position.y_max;
   player["position"]["y_min"] = this->position.y_min;
+  player["color"]["r"] = this->color.r;
+  player["color"]["g"] = this->color.g;
+  player["color"]["b"] = this->color.b;
+
   return player;
 }
 
@@ -80,4 +105,72 @@ Square Player::getPosition() {
 
 RGB Player::getColor() {
   return this->color;
+}
+
+
+
+PlayerList::PlayerList() {
+  this->players = new vector<Player *>(0);
+}
+
+PlayerList::PlayerList(json players) {
+  int i;
+  Player *p;
+  this->players = new vector<Player *>(0);
+  for (i=0 ; i<(int)players.size() ; i++) {
+    p = new Player(players[i]);
+    addPlayer(p);
+  }
+}
+
+json PlayerList::serialize() {
+  json players;
+  vector<Player *> *o = this->players;
+  for (int i = 0 ; i < (int)(*o).size() ; i++) {
+    players.push_back((*o)[i]->serialize());
+  }
+  return players;
+}
+
+unsigned PlayerList::addPlayer(Player *o) {
+  (this->players)->push_back(o);
+  return o->getId();
+}
+
+vector<Player*> *PlayerList::getPlayers(){
+  return this->players;
+}
+
+Player *PlayerList::getPlayer(unsigned id) {
+  vector<Player *> *p = this->players;
+  int i;
+  
+  for (i=0 ; i<(int)(*p).size() ; i++) {
+    if((*p)[i]->getId()==id) {
+      return (*p)[i];
+    }
+  }
+  return nullptr;
+}
+
+void PlayerList::update(json players) {
+  int i;
+  Square s;
+  Player *player;
+  unsigned id;
+
+  for (i=0 ; i<(int)players.size() ; i++) {
+    // Parse data from JSON
+    id = players[i]["id"].get<unsigned>();
+    s = {
+             players[i]["position"]["x_max"].get<float>(),
+             players[i]["position"]["y_max"].get<float>(),
+             players[i]["position"]["x_min"].get<float>(),
+             players[i]["position"]["y_min"].get<float>()
+    };
+
+    // Get desired player
+    player = getPlayer(id);
+    player->update(s);
+  }
 }

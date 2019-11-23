@@ -21,7 +21,8 @@ private:
   // Game info
   Map *map;
   ObstacleList *obstacles;
-  Player *player;
+  PlayerList *players;
+  Player *myself;
 
   // Connection info
 	int socket_fd;
@@ -32,18 +33,21 @@ private:
   char *buffer;
   unsigned int gate;
   string ip;
+  unsigned id;
   thread pkg_thread;
 
 public:
 	Client(unsigned int gate, string ip, int buffer_size);
-	bool init(Player *player, Map *map, ObstacleList *obstacles);
+	bool init(string player_name);
   json getPackage();
 	bool sendPackage(string data);
   bool getBufferStatus();
   void cclose();
-  Player *getPlayer();
+  PlayerList *getPlayerList();
+  Player *getMyself();
   Map *getMap();
   ObstacleList *getObstacleList();
+  unsigned getId();
 };
 
 #endif
