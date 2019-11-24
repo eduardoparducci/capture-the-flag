@@ -7,9 +7,13 @@ Map::Map(Square boundaries, Square basis_blue, Square basis_red) {
   this->boundaries = boundaries;
   this->basis_blue = basis_blue;
   this->basis_red = basis_red;
+  this->score_red = 0;
+  this->score_blue = 0;
 }
 
 Map::Map(json map) {
+  this->score_red = map["score_red"].get<unsigned>();
+  this->score_blue = map["score_blue"].get<unsigned>();
   this->playing = map["playing"].get<bool>();
   this->victory = map["victory"].get<bool>();
   this->defeat = map["defeat"].get<bool>();
@@ -45,6 +49,14 @@ Square Map::getRedBasis() {
   return this->basis_red;
 }
 
+unsigned Map::getRedScore() {
+  return this->score_red;
+}
+
+unsigned Map::getBlueScore() {
+  return this->score_blue;
+}
+
 bool Map::isValid(Square p) {
   if(p.y_max-1>this->boundaries.y_max) return false;
   if(p.y_min+1<this->boundaries.y_min) return false;
@@ -70,6 +82,8 @@ json Map::serialize() {
   map["playing"] = this->playing;
   map["victory"] = this->victory;
   map["defeat"] = this->defeat;
+  map["score_red"] = this->score_red;
+  map["score_blue"] = this->score_blue;
   map["boundaries"]["x_max"] = this->boundaries.x_max;
   map["boundaries"]["y_max"] = this->boundaries.y_max;
   map["boundaries"]["x_min"] = this->boundaries.x_min;

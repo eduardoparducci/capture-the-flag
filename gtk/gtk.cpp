@@ -137,6 +137,16 @@ void Gtk::drawMap() {
 	glVertex2i(s.x_max,s.y_min);
   glEnd();
 
+  // Team score
+  glRasterPos2i(s.x_min, s.y_max+5);
+  glutBitmapString(GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char *)"Blue score: ");
+  glutBitmapString(GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char *)to_string(this->client->getMap()->getBlueScore()).c_str());
+
+  // Team score
+  glRasterPos2i(s.x_max-20, s.y_max+5);
+  glutBitmapString(GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char *)"Red score: ");
+  glutBitmapString(GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char *)to_string(this->client->getMap()->getRedScore()).c_str());
+
   // Red Basis (transparent area)
   glColor4f(1.0f, 0.0f, 0.0f, 0.25f); // Color
   s = this->client->getMap()->getRedBasis();
@@ -159,8 +169,9 @@ void Gtk::drawMap() {
 
 }
 
-// Draw info at the bottom of the screen
+// Draw info
 void Gtk::drawInfo() {
+  // Player name at the bottom
   glRasterPos2i(-this->win+3, -this->win+3);
   glColor3f(0.0f, 0.0f, 0.0f);
   glutBitmapString(GLUT_BITMAP_TIMES_ROMAN_24, (const unsigned char *)"Player: ");
