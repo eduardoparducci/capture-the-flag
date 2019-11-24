@@ -197,6 +197,7 @@ void Server::updateGame(json state) {
   json new_state;
   new_state["is_game_status"] = true;
   new_state["players"] = this->physics->getPlayers()->serialize();
+  new_state["map"] = this->physics->getMap()->serialize();
   //cout << "Broadcasting physics" << endl;
   //cout << new_state.dump(4) << endl;
   sendPackage(new_state.dump());

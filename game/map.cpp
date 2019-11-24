@@ -65,6 +65,16 @@ bool Map::isValid(Square p) {
   return true;
 }
 
+bool Map::isRedBasis(Square p) {
+  if(p.x_min>=this->basis_red.x_min) return true;
+  return false;
+}
+
+bool Map::isBlueBasis(Square p) {
+  if(p.x_min>=this->basis_blue.x_min) return true;
+  return false;
+}
+
 bool Map::isVictory() {
   return this->victory;
 }
@@ -98,4 +108,13 @@ json Map::serialize() {
   map["basis_red"]["y_min"] = this->basis_red.y_min;
 
   return map;
+}
+
+void Map::setBlueScore() {
+  this->score_blue = this->score_blue+1;
+}
+
+void Map::update(json data) {
+  this->score_blue = data["score_blue"].get<unsigned>();
+  this->score_red = data["score_red"].get<unsigned>();
 }

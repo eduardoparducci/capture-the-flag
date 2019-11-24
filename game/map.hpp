@@ -31,9 +31,13 @@ public:
   unsigned getRedScore();
   Square getBoundaries();
   bool isValid(Square p);
+  bool isRedBasis(Square p);
+  bool isBlueBasis(Square p);
   bool isVictory();
   bool isDefeat();
   bool isPlaying();
+  void setBlueScore();
+  void update(json data);
   json serialize();
 };
 

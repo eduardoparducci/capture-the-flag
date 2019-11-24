@@ -48,6 +48,10 @@ void Physics::update(json state) {
 
     // Verify validity and store new position
     if(this->map->isValid(s) && !this->obstacles->hit(s)) {
+      if(p->getColor().b!=0 && this->map->isRedBasis(s)) {
+        this->map->setBlueScore();
+        s = {-87.6,3.5,-92.5,-3.5};
+      }
       p->update(s);
     }
   }

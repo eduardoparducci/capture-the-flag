@@ -188,6 +188,7 @@ void Gtk::timeHandler() {
     
     //Update players positions and update frame
     this->client->getPlayerList()->update(data["players"]);
+    this->client->getMap()->update(data["map"]);
     glutPostRedisplay();
   }
   
