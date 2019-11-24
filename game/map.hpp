@@ -37,6 +37,7 @@ public:
   bool isDefeat();
   bool isPlaying();
   void setBlueScore();
+  void setRedScore();
   void update(json data);
   json serialize();
 };

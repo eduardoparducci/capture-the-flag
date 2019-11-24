@@ -71,7 +71,7 @@ bool Map::isRedBasis(Square p) {
 }
 
 bool Map::isBlueBasis(Square p) {
-  if(p.x_min>=this->basis_blue.x_min) return true;
+  if(p.x_max<=this->basis_blue.x_max) return true;
   return false;
 }
 
@@ -112,6 +112,10 @@ json Map::serialize() {
 
 void Map::setBlueScore() {
   this->score_blue = this->score_blue+1;
+}
+
+void Map::setRedScore() {
+  this->score_red = this->score_red+1;
 }
 
 void Map::update(json data) {

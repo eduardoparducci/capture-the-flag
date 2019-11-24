@@ -52,6 +52,10 @@ void Physics::update(json state) {
         this->map->setBlueScore();
         s = {-87.6,3.5,-92.5,-3.5};
       }
+	  if(p->getColor().r!=0 && this->map->isBlueBasis(s)) {
+        this->map->setRedScore();
+        s = {92.6,3.5,87.5,-3.5};
+      }
       p->update(s);
     }
   }
