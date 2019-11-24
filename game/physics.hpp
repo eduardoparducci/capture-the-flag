@@ -31,6 +31,7 @@ public:
   Map *getMap();
   ObstacleList *getObstacles();
   unsigned addPlayer(string name);
+  void removePlayer(unsigned id);
   void update(json state);
   void start();
   void stop();

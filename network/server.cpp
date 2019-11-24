@@ -1,6 +1,15 @@
 #include "server.hpp"
 
+void wait_connections(bool *running, int *socket_fd, struct sockaddr_in *client, socklen_t *client_size, Server *s) {
+  int conn_fd;
+  while(*running) {
+    conn_fd = accept(*socket_fd, (struct sockaddr*)client, client_size);
+    s->addConnection(conn_fd);
+  }
+}
+
 void wait_package(char **buffer, int buffer_size, bool *buffer_status, bool *running, int connection_fd) {
+  cout << "Server: (pkg thread) new thread initialized." << endl;
   while(*running) {
     if(*buffer_status==FREE) {
       *buffer[0]= '\0';
@@ -12,18 +21,57 @@ void wait_package(char **buffer, int buffer_size, bool *buffer_status, bool *run
   return;
 }
 
+int Server::addConnection(int connection_fd) {
+  int i;
+
+  // Check if there is capacity for new client
+  for (i=0 ; i<MAX_CONNECTIONS ; i++) {
+    if (this->used_connections[i] == false) {
+      cout << "Server: new user joined the server, launching package thread for user(" << i << ")" << endl;
+
+      // Configuring buffer and launching thread for new user
+      this->used_connections[i] = true;
+      this->connection_fd[i] = connection_fd;
+      this->buffer_status[i] = FREE;
+      buffer[i] = (char *)malloc(this->buffer_size * sizeof(char));
+      thread newthread(wait_package, &(this->buffer[i]), this->buffer_size, &(this->buffer_status[i]), &(this->running), this->connection_fd[i]);
+      (this->pkg_thread[i]).swap(newthread);
+
+      return i;
+    }
+  }
+  cout << "Server: ERROR maximum users reached." << endl;  
+  return -1;
+}
+
+void Server::removeConnection(int user) {
+  cout << "Server: user(" << user << ") left the server" << endl;
+  if (this->used_connections[user]==true) {
+    this->used_connections[user] = false;
+    free(buffer[user]);
+    close(this->connection_fd[user]);
+  }
+}
+
 Server::Server(unsigned int gate, string ip, unsigned int buffer_size) {
-  // Buffer setup
+  int i;
+
   this->buffer_size = buffer_size;
-  this->buffer_status = FREE;
-  this->buffer = (char *)malloc(buffer_size * sizeof(char));
-  
+  for(i=0 ; i<MAX_CONNECTIONS ; i++) {
+    this->buffer_status[i] = FREE;
+  }
+
   // General Server setup
   this->running = false;
   this->client_size = (socklen_t)sizeof(this->client);
   this->gate = gate;
   this->ip = ip;
   socket_fd = socket(AF_INET, SOCK_STREAM, 0);
+
+  // Client list setup
+  for(i=0 ; i<MAX_CONNECTIONS ; i++) {
+    this->used_connections[i] = false;
+  }
   
   cout << "Server: socket created " << endl;
 }
@@ -47,37 +95,62 @@ bool Server::init(Physics *physics) {
 }
 
 void Server::sclose() {
+  int i;
+
   this->running = false;
-  (this->pkg_thread).join();
-  free(this->buffer);
-  close(this->socket_fd);
+
+  // Close every connection
+  for(i=0 ; i<MAX_CONNECTIONS ; i++) {
+    removeConnection(i);
+    (this->pkg_thread[i]).join();
+  }
+  this->connection_thread.join();
 }
 
 void Server::slisten() {
   listen(this->socket_fd, 2);
   cout << "Server: listening on gate " << this->gate << endl;
-  cout << "Server: waiting packages..." << endl;
-  this->connection_fd = accept(this->socket_fd, (struct sockaddr*)&this->client, &this->client_size);
+  cout << "Server: waiting connections..." << endl;
+
   this->running = true;
-  thread newthread(wait_package, &(this->buffer), this->buffer_size, &(this->buffer_status), &(this->running), this->connection_fd);
-  (this->pkg_thread).swap(newthread);
+
+  // Listen to new connections
+  thread connectionthread(
+                          wait_connections,
+                          &(this->running),
+                          &(this->socket_fd),
+                          &(this->client),
+                          &(this->client_size),
+                          this
+                          );
+  (this->connection_thread).swap(connectionthread);
+
 }
 
 json Server::getPackage() {
+  static int i=0;
   json pkg;
-  if(this->buffer_status==BUSY) {
-    string buffer_copy(this->buffer);
+  if(this->buffer_status[i]==BUSY) {
+    string buffer_copy(this->buffer[i]);
     pkg = json::parse(buffer_copy);
-    this->buffer_status = FREE;
-    cout << "Server: received:" << endl;
-    cout << pkg.dump(4) << endl;
+    pkg["client"] = i;
+    this->buffer_status[i] = FREE;
+    //cout << "Server: buffer(" << i << ") received:" << endl;
+    //cout << pkg.dump(4) << endl;
   }
+  i++;
+  if(i==MAX_CONNECTIONS) i=0;
   return pkg;
 }
 
 bool Server::sendPackage(string data) {
-  if(send(this->connection_fd, data.c_str(), data.size()+1, 0) < 0) {
-    return false;
+  int i;
+  for(i=0 ; i<MAX_CONNECTIONS ; i++) {
+    if(this->used_connections[i]) {
+      if(send(this->connection_fd[i], data.c_str(), data.size()+1, 0) < 0) {
+        return false;
+      }
+    }
   }
   return true;
 }
@@ -88,23 +161,28 @@ bool Server::addClient(json data) {
     cout << "Server: player " << data["name"].dump() << " joined the server." << endl;
 
     // Create game state package to send to the client
+    game_state["init"] = true;
     game_state["id"] = this->physics->addPlayer(data["name"].get<string>());
     game_state["players"] = this->physics->getPlayers()->serialize();
     game_state["map"] = this->physics->getMap()->serialize();
     game_state["obstacles"] = this->physics->getObstacles()->serialize();
 
     // Sending confirmation to client
-    cout << "Server: replying game: " << endl;
-    cout << game_state.dump(4) << endl;
+    //cout << "Server: replying game: " << endl;
+    //cout << game_state.dump(4) << endl;
     sendPackage(game_state.dump());
 
     return true;
 }
 
+void Server::removeClient(json data) {
+  this->physics->removePlayer(data["id"].get<unsigned>());
+  removeConnection(data["client"].get<int>());
+}
+
 void Server::updateGame(json state) {
-  // Checking empy state
+  // Checking empy state (no players joined the server)
   if(state.empty()) {
-    cout << "Server: nothing to do, returning." << endl;
     return;
   }
 
@@ -113,6 +191,7 @@ void Server::updateGame(json state) {
 
   // Broadcasting result
   json new_state;
+  new_state["is_game_status"] = true;
   new_state["players"] = this->physics->getPlayers()->serialize();
   sendPackage(new_state.dump());
 }

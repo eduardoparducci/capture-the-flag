@@ -161,8 +161,8 @@ void Gtk::timeHandler() {
 
   json data = this->client->getPackage();
 
-  // Check if data has content
-  if(!data.empty()) {
+  // Check if data has game content
+  if(!data["is_game_status"].empty()) {
     
     //Update players positions and update frame
     this->client->getPlayerList()->update(data["players"]);
@@ -245,7 +245,7 @@ void Gtk::updateKeys(char key, bool is_pressed) {
   p = this->client->getMyself();
   p->setDirection(this->keys);
 
-  data = p->serialize();
+  data["id"] = p->getId();
   data["keys"] = this->keys;
   cout << "GTK: new key signal:" << endl;
   cout << data.dump(4) << endl;

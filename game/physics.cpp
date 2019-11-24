@@ -18,7 +18,7 @@ void Physics::update(json state) {
   // Verify if game is running
   if(!this->running) return;
 
-  // Update keys pressed
+  // Update keys pressed of the desired player
   p->setDirection(state["keys"]);  
 
   // Iterate every player
@@ -80,4 +80,9 @@ unsigned Physics::addPlayer(string name) {
   cout << "Physics: New player:" << endl;
   cout << this->players->serialize().dump(4) << endl;
   return player->getId();
+}
+
+void Physics::removePlayer(unsigned id) {
+  cout << "Physics: removing player id(" << id << ")" << endl; 
+  this->players->removePlayer(id);
 }

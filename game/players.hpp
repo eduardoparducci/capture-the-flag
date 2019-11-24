@@ -20,6 +20,7 @@ private:
 public:
   Player(float x, float y, float height, float width, string name, RGB color, unsigned id);
   Player(json player);
+  ~Player();
   void setId(unsigned id);
   void update(Square p);
   void resize(Square position);
@@ -41,6 +42,7 @@ public:
   PlayerList();
   PlayerList(json players);
   unsigned addPlayer(Player *p);
+  void removePlayer(unsigned id);
   json serialize();
   vector<Player*> *getPlayers();
   Player *getPlayer(unsigned id);

@@ -55,14 +55,14 @@ bool Client::init(string player_name) {
 
   // Waiting for server response with timeout
   do {
-    std::this_thread::sleep_for (std::chrono::milliseconds(100));
+    std::this_thread::sleep_for (std::chrono::milliseconds(10));
     server_response = getPackage();
     timeout++;
-  } while(server_response.empty() && timeout<100);
+  } while(server_response["init"].empty() && timeout<100);
 
   // Verify if timeout occured without a response
-  if(server_response.empty()) {
-    cout << "Client: ERROR initial config with server took too long." << endl;
+  if(server_response["init"].empty()) {
+    cout << "Client: ERROR server timed out." << endl;
     return false;
   } else {
     cout << "Client: player added successfully." << endl;
@@ -88,6 +88,11 @@ Player *Client::getMyself() {
 }
 
 void Client::cclose() {
+  json data;
+  cout << "Client: terminating connection" << endl;
+  data["close"] = true;
+  data["id"] = this->id;
+  sendPackage(data);
   this->running = false;
   (this->pkg_thread).join();
   free(this->buffer);

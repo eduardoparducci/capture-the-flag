@@ -3,6 +3,9 @@
 using namespace std;
 using json = nlohmann::json;
 
+Player::~Player() {
+}
+
 Player::Player(float x, float y, float height, float width, string name, RGB color, unsigned id) {
   this->name = name;
   this->id = id;
@@ -20,7 +23,6 @@ Player::Player(float x, float y, float height, float width, string name, RGB col
 }
 
 Player::Player(json player) {
-  cout << "Player: creating player from JSON" << endl;
   this->name = player["name"].get<string>();
   this->id = player["id"].get<unsigned>();
   this->direction['a'] = false;
@@ -171,6 +173,27 @@ void PlayerList::update(json players) {
 
     // Get desired player
     player = getPlayer(id);
+
+    // If player does not exist add it to the game
+    if(!player) {
+      player = new Player(players[i]);
+      addPlayer(player);
+    }
     player->update(s);
+  }
+}
+
+void PlayerList::removePlayer(unsigned id) {
+  json players;
+  vector<Player *> *o = this->players;
+  vector<Player> e;
+  for (int i = 0 ; i < (int)(*o).size() ; i++) {
+    if((*o)[i]->getId()==id) {
+      delete((*o)[i]);
+      while(i < (int)(*o).size()-1) {
+        (*o)[i] = (*o)[i+1];
+      }
+      return;
+    }
   }
 }

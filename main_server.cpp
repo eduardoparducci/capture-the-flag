@@ -22,7 +22,6 @@ int main() {
   // Connection variables
   Server *server = new Server(3001,"127.0.0.1", 2000);
   json client_data, last_client_data;
-  json new_client;
 
   // Configure new game
   obs->addObstacle(o0);
@@ -33,19 +32,24 @@ int main() {
   if(!server->init(physics)) return 1;
   server->slisten();
 
-  // Configure new client (defined as first package)
-  while(client_data.empty()) {
-    client_data = server->getPackage();
-  }
-  server->addClient(client_data);
-
   // Start game loop
   server->getPhysics()->start();
   while(1) {
     client_data = server->getPackage();
+
+    // Fetched package
     if(!client_data.empty()) {
-      last_client_data = client_data;
+
+      // New client
+      if(!client_data["init"].empty()) {
+        server->addClient(client_data);
+      } else {
+        
+        // Player movement
+        last_client_data = client_data;
+      }
     }
+    // Update game state
     server->updateGame(last_client_data);
     std::this_thread::sleep_for (std::chrono::milliseconds(20));
   }
