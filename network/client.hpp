@@ -38,7 +38,7 @@ private:
 
 public:
 	Client(unsigned int gate, string ip, int buffer_size);
-	bool init(string player_name);
+	bool init(string player_name, string team);
   json getPackage();
 	bool sendPackage(string data);
   bool getBufferStatus();

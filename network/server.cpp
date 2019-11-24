@@ -128,19 +128,23 @@ void Server::slisten() {
 }
 
 json Server::getPackage() {
-  static int i=0;
+  int i;
   json pkg;
-  if(this->buffer_status[i]==BUSY) {
-    string buffer_copy(this->buffer[i]);
-    pkg = json::parse(buffer_copy);
-    pkg["client"] = i;
-    this->buffer_status[i] = FREE;
-    //cout << "Server: buffer(" << i << ") received:" << endl;
-    //cout << pkg.dump(4) << endl;
+  json buffers;
+  
+  for(i=0 ; i<MAX_CONNECTIONS ; i++) {
+    if(this->buffer_status[i]==BUSY) {
+      string buffer_copy(this->buffer[i]);
+      pkg = json::parse(buffer_copy);
+      pkg["client"] = i;
+      this->buffer_status[i] = FREE;
+      if(!pkg.empty())
+        buffers.push_back(pkg);
+      //cout << "Server: buffer(" << i << ") received:" << endl;
+      //cout << pkg.dump(4) << endl;
+    }
   }
-  i++;
-  if(i==MAX_CONNECTIONS) i=0;
-  return pkg;
+  return buffers;
 }
 
 bool Server::sendPackage(string data) {
@@ -162,14 +166,14 @@ bool Server::addClient(json data) {
 
     // Create game state package to send to the client
     game_state["init"] = true;
-    game_state["id"] = this->physics->addPlayer(data["name"].get<string>());
+    game_state["id"] = this->physics->addPlayer(data["name"].get<string>(), data["team"].get<string>());
     game_state["players"] = this->physics->getPlayers()->serialize();
     game_state["map"] = this->physics->getMap()->serialize();
     game_state["obstacles"] = this->physics->getObstacles()->serialize();
 
     // Sending confirmation to client
-    //cout << "Server: replying game: " << endl;
-    //cout << game_state.dump(4) << endl;
+    cout << "Server: replying game: " << endl;
+    cout << game_state.dump(4) << endl;
     sendPackage(game_state.dump());
 
     return true;
@@ -182,7 +186,7 @@ void Server::removeClient(json data) {
 
 void Server::updateGame(json state) {
   // Checking empy state (no players joined the server)
-  if(state.empty()) {
+  if(state.empty() || !state["init"].empty()) {
     return;
   }
 
@@ -193,6 +197,8 @@ void Server::updateGame(json state) {
   json new_state;
   new_state["is_game_status"] = true;
   new_state["players"] = this->physics->getPlayers()->serialize();
+  //cout << "Broadcasting physics" << endl;
+  //cout << new_state.dump(4) << endl;
   sendPackage(new_state.dump());
 }
 

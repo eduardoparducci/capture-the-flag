@@ -30,20 +30,20 @@ void Physics::update(json state) {
     Square s = p->getPosition();
     ::map<char, bool> d = p->getDirection();
     if(d['a']) {
-      s.x_min -= 0.8;
-      s.x_max -= 0.8;
+      s.x_min -= 3;
+      s.x_max -= 3;
     }
     if(d['d']) {
-      s.x_min += 0.8;
-      s.x_max += 0.8;
+      s.x_min += 3;
+      s.x_max += 3;
     }
     if(d['w']) {
-      s.y_min += 0.8;
-      s.y_max += 0.8;
+      s.y_min += 3;
+      s.y_max += 3;
     }
     if(d['s']) {
-      s.y_min -= 0.8;
-      s.y_max -= 0.8;
+      s.y_min -= 3;
+      s.y_max -= 3;
     }
 
     // Verify validity and store new position
@@ -73,9 +73,19 @@ ObstacleList *Physics::getObstacles(){
   return this->obstacles;
 }
 
-unsigned Physics::addPlayer(string name) {
-  // Create new player with unique id and name defined by client
-  Player *player = new Player(0.0f, 0.0f, 7.0f, 5.0f, name, {1.0f, 0.0f, 0.0f}, this->players->getPlayers()->size());
+unsigned Physics::addPlayer(string name, string team) {
+  // Create new player with unique id, with name and team defined by client
+  RGB color;
+  float xi;
+  
+  if(team.compare("blue")==0) {
+    color = {0,0,1};
+    xi = -90.0;
+  } else {
+    color = {1,0,0};
+    xi = 90.0;
+  }
+  Player *player = new Player(xi, 0.0f, 7.0f, 5.0f, name, color, this->players->getPlayers()->size());
   this->players->addPlayer(player);
   cout << "Physics: New player:" << endl;
   cout << this->players->serialize().dump(4) << endl;

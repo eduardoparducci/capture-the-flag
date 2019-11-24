@@ -30,7 +30,7 @@ Client::Client(unsigned int gate, string ip, int buffer_size) {
   cout << "Client: socket created " << endl;
 }
 
-bool Client::init(string player_name) {
+bool Client::init(string player_name, string team) {
   
   json client_info;
   json server_response;
@@ -50,12 +50,13 @@ bool Client::init(string player_name) {
   // Creating package and sending to server
   cout << "Client: adding player: " <<  player_name << endl;
   client_info["name"] = player_name;
+  client_info["team"] = team;
   client_info["init"] = true;
   sendPackage(client_info.dump());
 
   // Waiting for server response with timeout
   do {
-    std::this_thread::sleep_for (std::chrono::milliseconds(10));
+    std::this_thread::sleep_for (std::chrono::milliseconds(100));
     server_response = getPackage();
     timeout++;
   } while(server_response["init"].empty() && timeout<100);
@@ -127,6 +128,8 @@ json Client::getPackage() {
   if(this->buffer_status == BUSY) {
     string buffer_copy(this->buffer);
     pkg = json::parse(buffer_copy);  
+    //cout << "Client: got package" << endl;
+    //cout << pkg.dump(4);
     this->buffer_status = FREE;
   }
   return pkg;

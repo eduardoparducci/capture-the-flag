@@ -30,7 +30,7 @@ public:
   PlayerList *getPlayers();
   Map *getMap();
   ObstacleList *getObstacles();
-  unsigned addPlayer(string name);
+  unsigned addPlayer(string name, string team);
   void removePlayer(unsigned id);
   void update(json state);
   void start();

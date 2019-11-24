@@ -13,9 +13,12 @@ int main(int argc, char **argv) {
   Client *client = new Client(3001, "127.0.0.1", 2000);
   Gtk *gtk = new Gtk();
   string player_name;
-  cout << "Nome do jogador:";
+  string team;
+  cout << "Player name:";
   cin >> player_name;
-  if(!client->init(player_name)) return 1;
+  cout << "Team (blue | red):";
+  cin >> team;
+  if(!client->init(player_name, team)) return 1;
   gtk->init(argc, argv, client);
   client->cclose();
   return 0;

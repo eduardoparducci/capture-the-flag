@@ -1,11 +1,12 @@
 #include "map.hpp"
 
-Map::Map(Square boundaries, Square basis) {
+Map::Map(Square boundaries, Square basis_blue, Square basis_red) {
   this->playing = true;
   this->victory = false;
   this->defeat = false;
   this->boundaries = boundaries;
-  this->basis = basis;
+  this->basis_blue = basis_blue;
+  this->basis_red = basis_red;
 }
 
 Map::Map(json map) {
@@ -18,11 +19,17 @@ Map::Map(json map) {
                       map["boundaries"]["x_min"].get<float>(),
                       map["boundaries"]["y_min"].get<float>()
   };
-  this->basis = {
-                 map["basis"]["x_max"].get<float>(),
-                 map["basis"]["y_max"].get<float>(),
-                 map["basis"]["x_min"].get<float>(),
-                 map["basis"]["y_min"].get<float>()
+  this->basis_blue = {
+                 map["basis_blue"]["x_max"].get<float>(),
+                 map["basis_blue"]["y_max"].get<float>(),
+                 map["basis_blue"]["x_min"].get<float>(),
+                 map["basis_blue"]["y_min"].get<float>()
+  };
+  this->basis_red = {
+                 map["basis_red"]["x_max"].get<float>(),
+                 map["basis_red"]["y_max"].get<float>(),
+                 map["basis_red"]["x_min"].get<float>(),
+                 map["basis_red"]["y_min"].get<float>()
   };
 }
 
@@ -30,8 +37,12 @@ Square Map::getBoundaries() {
   return this->boundaries;
 }
 
-Square Map::getBasis() {
-  return this->basis;
+Square Map::getBlueBasis() {
+  return this->basis_blue;
+}
+
+Square Map::getRedBasis() {
+  return this->basis_red;
 }
 
 bool Map::isValid(Square p) {
@@ -63,9 +74,14 @@ json Map::serialize() {
   map["boundaries"]["y_max"] = this->boundaries.y_max;
   map["boundaries"]["x_min"] = this->boundaries.x_min;
   map["boundaries"]["y_min"] = this->boundaries.y_min;
-  map["basis"]["x_max"] = this->basis.x_max;
-  map["basis"]["y_max"] = this->basis.y_max;
-  map["basis"]["x_min"] = this->basis.x_min;
-  map["basis"]["y_min"] = this->basis.y_min;
+  map["basis_blue"]["x_max"] = this->basis_blue.x_max;
+  map["basis_blue"]["y_max"] = this->basis_blue.y_max;
+  map["basis_blue"]["x_min"] = this->basis_blue.x_min;
+  map["basis_blue"]["y_min"] = this->basis_blue.y_min;
+  map["basis_red"]["x_max"] = this->basis_red.x_max;
+  map["basis_red"]["y_max"] = this->basis_red.y_max;
+  map["basis_red"]["x_min"] = this->basis_red.x_min;
+  map["basis_red"]["y_min"] = this->basis_red.y_min;
+
   return map;
 }

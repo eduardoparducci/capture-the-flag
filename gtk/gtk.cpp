@@ -137,15 +137,26 @@ void Gtk::drawMap() {
 	glVertex2i(s.x_max,s.y_min);
   glEnd();
 
-  // Basis (transparent area)
+  // Red Basis (transparent area)
   glColor4f(1.0f, 0.0f, 0.0f, 0.25f); // Color
-  s = this->client->getMap()->getBasis();
+  s = this->client->getMap()->getRedBasis();
   glBegin(GL_QUADS);
   glVertex2i(s.x_min,s.y_min);
   glVertex2i(s.x_min,s.y_max);
   glVertex2i(s.x_max,s.y_max);
   glVertex2i(s.x_max,s.y_min);
   glEnd();
+
+  // Blue Basis (transparent area)
+  glColor4f(0.0f, 0.0f, 1.0f, 0.25f); // Color
+  s = this->client->getMap()->getBlueBasis();
+  glBegin(GL_QUADS);
+  glVertex2i(s.x_min,s.y_min);
+  glVertex2i(s.x_min,s.y_max);
+  glVertex2i(s.x_max,s.y_max);
+  glVertex2i(s.x_max,s.y_min);
+  glEnd();
+
 }
 
 // Draw info at the bottom of the screen

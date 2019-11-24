@@ -14,15 +14,17 @@ using json = nlohmann::json;
 class Map {
 private:
   Square boundaries;
-  Square basis;
+  Square basis_blue;
+  Square basis_red;
   bool playing;
   bool victory;
   bool defeat;
 
 public:
-  Map(Square boundaries, Square basis);
+  Map(Square boundaries, Square basis_blue, Square basis_red);
   Map(json map);
-  Square getBasis();
+  Square getBlueBasis();
+  Square getRedBasis();
   Square getBoundaries();
   bool isValid(Square p);
   bool isVictory();

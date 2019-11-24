@@ -15,7 +15,7 @@ Player::Player(float x, float y, float height, float width, string name, RGB col
   this->direction['s'] = false;
   this->direction['d'] = false;
 
-  //Calculate coordinates
+  //Calculate coordinates based on the color
   this->position.y_max = y+height/2;
   this->position.y_min = y-height/2;
   this->position.x_max = x+width/2;
