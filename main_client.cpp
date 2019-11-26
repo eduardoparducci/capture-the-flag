@@ -10,10 +10,20 @@
 
 using namespace std;
 int main(int argc, char **argv) {
-  Client *client = new Client(3001, "127.0.0.1", 2000);
+  Client *client;
   Gtk *gtk = new Gtk();
   string player_name;
   string team;
+  string ip;
+  unsigned int gate;
+
+  cout << "Connection config..." << endl;
+  cout << "IP:";
+  cin >> ip;
+  cout << "GATE:";
+  cin >> gate;
+  client = new Client(gate,ip,2000);
+  
   cout << "Player name:";
   cin >> player_name;
   cout << "Team (blue | red):";

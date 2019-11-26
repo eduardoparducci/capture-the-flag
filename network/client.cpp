@@ -25,6 +25,7 @@ Client::Client(unsigned int gate, string ip, int buffer_size) {
   this->ip = ip;
   this->target.sin_family = AF_INET;
   this->target.sin_port = htons(gate);
+  this->gate = gate;
   inet_aton(ip.c_str(), &(this->target.sin_addr));
 
   cout << "Client: socket created " << endl;

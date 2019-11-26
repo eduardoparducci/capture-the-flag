@@ -20,9 +20,19 @@ int main() {
   Physics *physics;
 
   // Connection variables
-  Server *server = new Server(3001,"127.0.0.1", 2000);
+  Server *server;
   json client_data, last_client_data;
   int i;
+
+  string ip;
+  unsigned int gate;
+  cout << "Server config..." << endl;
+  cout << "IP:";
+  cin >> ip;
+  cout << "GATE:";
+  cin >> gate;
+
+  server = new Server(gate,ip, 2000);
   
   // Configure new game
   obs->addObstacle(o0);
