@@ -1,13 +1,17 @@
 #include "client.hpp"
 
+mutex buffer_lock;
+
 void wait_package(char **buffer, int buffer_size, bool *buffer_status, bool *running, int socket_fd) {
   while(*running) {
+    while(!buffer_lock.try_lock());
     if(*buffer_status==FREE) {
       *buffer[0]= '\0';
       recv(socket_fd, *buffer, buffer_size, 0);
       *buffer_status = BUSY;
     }
-    std::this_thread::sleep_for (chrono::milliseconds(1000));
+    buffer_lock.unlock();
+    std::this_thread::sleep_for (chrono::milliseconds(50));
   }
   return;
 }
@@ -126,17 +130,26 @@ Map *Client::getMap() {
 
 json Client::getPackage() {
   json pkg;
-  if(this->buffer_status == BUSY) {
-    string buffer_copy(this->buffer);
-    pkg = json::parse(buffer_copy);  
-    cout << "Client: got package" << endl;
-    cout << pkg.dump(4);
-    this->buffer_status = FREE;
+  if(buffer_lock.try_lock()) {
+    if(this->buffer_status == BUSY) {
+      string buffer_copy(this->buffer);
+      this->buffer_status = FREE;
+      buffer_lock.unlock();
+      pkg = json::parse(buffer_copy);  
+      //cout << "Client: got package" << endl;
+      //cout << pkg.dump(4);
+    } else {
+      buffer_lock.unlock();
+    }
   }
   return pkg;
 }
 
 bool Client::getBufferStatus() {
-  bool status = this->buffer_status;
+  bool status = FREE;
+  if(buffer_lock.try_lock()) {
+    status = this->buffer_status;
+    buffer_lock.unlock();
+  }
   return status;
 }

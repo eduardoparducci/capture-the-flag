@@ -1,5 +1,7 @@
 #include "server.hpp"
 
+mutex buffer_lock[MAX_CONNECTIONS];
+
 void wait_connections(bool *running, int *socket_fd, struct sockaddr_in *client, socklen_t *client_size, Server *s) {
   int conn_fd;
   while(*running) {
@@ -8,15 +10,17 @@ void wait_connections(bool *running, int *socket_fd, struct sockaddr_in *client,
   }
 }
 
-void wait_package(char **buffer, int buffer_size, bool *buffer_status, bool *running, int connection_fd) {
+void wait_package(char **buffer, int buffer_size, bool *buffer_status, bool *running, int connection_fd, int i) {
   cout << "Server: (pkg thread) new thread initialized." << endl;
   while(*running) {
+    while(!buffer_lock[i].try_lock());
     if(*buffer_status==FREE) {
       *buffer[0]= '\0';
       recv(connection_fd, *buffer, buffer_size, 0);
       *buffer_status = BUSY;
     }
-    this_thread::sleep_for (chrono::milliseconds(1000));
+    buffer_lock[i].unlock();
+    this_thread::sleep_for (chrono::milliseconds(50));
   }
   return;
 }
@@ -34,7 +38,7 @@ int Server::addConnection(int connection_fd) {
       this->connection_fd[i] = connection_fd;
       this->buffer_status[i] = FREE;
       buffer[i] = (char *)malloc(this->buffer_size * sizeof(char));
-      thread newthread(wait_package, &(this->buffer[i]), this->buffer_size, &(this->buffer_status[i]), &(this->running), this->connection_fd[i]);
+      thread newthread(wait_package, &(this->buffer[i]), this->buffer_size, &(this->buffer_status[i]), &(this->running), this->connection_fd[i], i);
       (this->pkg_thread[i]).swap(newthread);
 
       return i;
@@ -133,15 +137,20 @@ json Server::getPackage() {
   json buffers;
   
   for(i=0 ; i<MAX_CONNECTIONS ; i++) {
-    if(this->buffer_status[i]==BUSY) {
-      string buffer_copy(this->buffer[i]);
-      pkg = json::parse(buffer_copy);
-      pkg["client"] = i;
-      this->buffer_status[i] = FREE;
-      if(!pkg.empty())
-        buffers.push_back(pkg);
-      cout << "Server: buffer(" << i << ") received:" << endl;
-      cout << pkg.dump(4) << endl;
+    if(buffer_lock[i].try_lock()) {
+      if(this->buffer_status[i]==BUSY) {
+        string buffer_copy(this->buffer[i]);
+        this->buffer_status[i] = FREE;
+        buffer_lock[i].unlock();
+        pkg = json::parse(buffer_copy);
+        pkg["client"] = i;
+        if(!pkg.empty())
+          buffers.push_back(pkg);
+        // cout << "Server: buffer(" << i << ") received:" << endl;
+        // cout << pkg.dump(4) << endl;
+      } else {
+        buffer_lock[i].unlock();
+      }
     }
   }
   return buffers;

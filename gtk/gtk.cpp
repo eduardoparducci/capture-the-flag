@@ -184,16 +184,19 @@ void Gtk::timeHandler() {
   json data = this->client->getPackage();
 
   // Check if data has game content
-  if(!data["is_game_status"].empty()) {
-    
-    //Update players positions and update frame
-    this->client->getPlayerList()->update(data["players"]);
-    this->client->getMap()->update(data["map"]);
-    glutPostRedisplay();
+  if(!data.empty()) {
+    if(!data["is_game_status"].empty()) {    
+      //Update players positions and update frame
+      if(!data["map"].empty() || !data["players"].empty()) {
+        this->client->getPlayerList()->update(data["players"]);
+        this->client->getMap()->update(data["map"]);
+        glutPostRedisplay();
+      }
+    }
   }
   
   // Set new callback
-  glutTimerFunc(20, timerCallback, 1);
+  glutTimerFunc(80, timerCallback, 1);
 }
 
 // Initial config

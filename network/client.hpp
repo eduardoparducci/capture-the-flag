@@ -10,7 +10,6 @@
 
 #define BUSY true
 #define FREE false
-
 #define JSON_BUFFER_SIZE 1000
 
 using json = nlohmann::json;
