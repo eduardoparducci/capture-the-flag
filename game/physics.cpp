@@ -52,15 +52,14 @@ void Physics::update(json state) {
         this->map->setBlueScore();
         s = {-87.6,3.5,-92.5,-3.5};
       }
-	  if(p->getColor().r!=0 && this->map->isBlueBasis(s)) {
+      if(p->getColor().r!=0 && this->map->isBlueBasis(s)) {
         this->map->setRedScore();
         s = {92.6,3.5,87.5,-3.5};
       }
-	  this->players->verifyPositions();
       p->update(s);
-
     }
   }
+  this->players->verifyPositions();
 }
 
 void Physics::start() {

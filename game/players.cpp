@@ -186,10 +186,11 @@ void PlayerList::update(json players) {
 void PlayerList::verifyPositions() {
 	vector<Player *> *redPlayers = this->getRedPlayers();
 	vector<Player *> *bluePlayers = this->getBluePlayers();
+  Square redPos, bluePos;
+  Square resetBlue, resetRed;
+
 	for(int i=0; i <(int)(*redPlayers).size() ; i++){
         for(int j=0; j <(int)(*bluePlayers).size() ; j++){
-            Square redPos, bluePos ;
-            Square resetBlue, resetRed;
             resetBlue = {-87.6,3.5,-92.5,-3.5};
             resetRed = {92.6,3.5,87.5,-3.5};
 
