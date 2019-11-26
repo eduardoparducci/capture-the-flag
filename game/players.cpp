@@ -2,7 +2,7 @@
 
 using namespace std;
 using json = nlohmann::json;
-
+bool doOverlap(Square blue, Square red);
 Player::~Player() {
 }
 
@@ -181,6 +181,64 @@ void PlayerList::update(json players) {
     }
     player->update(s);
   }
+}
+
+void PlayerList::verifyPositions() {
+	vector<Player *> *redPlayers = this->getRedPlayers();
+	vector<Player *> *bluePlayers = this->getBluePlayers();
+	for(int i=0; i <(int)(*redPlayers).size() ; i++){
+        for(int j=0; j <(int)(*bluePlayers).size() ; j++){
+            Square redPos, bluePos ;
+            Square resetBlue, resetRed;
+            resetBlue = {-87.6,3.5,-92.5,-3.5};
+            resetRed = {92.6,3.5,87.5,-3.5};
+
+            redPos = (*redPlayers)[i]->getPosition();
+            bluePos = (*bluePlayers)[j]->getPosition();
+            if(doOverlap(bluePos,redPos)){
+                (*redPlayers)[i]->update(resetRed);
+                (*bluePlayers)[j]->update(resetBlue);
+            }
+        }
+	}
+
+}
+
+
+bool doOverlap(Square blue,Square red){
+    // If one rectangle is on left side of other
+    if (blue.x_min > red.x_max || red.x_min > blue.x_max)
+        return false;
+
+    // If one rectangle is above other
+    if (blue.y_max < red.y_min || red.y_max < blue.y_min)
+        return false;
+
+    return true;
+}
+
+vector<Player*> *PlayerList::getRedPlayers() {
+	vector<Player *> *p = this->players;
+	vector<Player *> *redPlayers = new vector<Player *>(0);
+	for (int i=0 ; i<(int)(*p).size() ; i++) {
+    if((*p)[i]->getColor().r!=0) {	
+		(*redPlayers).push_back((*p)[i]);
+     }
+    }
+    return redPlayers;
+
+}
+
+vector<Player*> *PlayerList::getBluePlayers() {
+	vector<Player *> *p = this->players;
+	vector<Player *> *bluePlayers = new vector<Player *>(0);
+	for (int i=0 ; i<(int)(*p).size() ; i++) {
+    if((*p)[i]->getColor().b!=0) {	
+		(*bluePlayers).push_back((*p)[i]);
+     }
+    }
+    return bluePlayers;
+
 }
 
 void PlayerList::removePlayer(unsigned id) {

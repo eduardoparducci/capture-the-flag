@@ -47,6 +47,9 @@ public:
   vector<Player*> *getPlayers();
   Player *getPlayer(unsigned id);
   void update(json players);
+  vector<Player*> *getRedPlayers();
+  vector<Player*> *getBluePlayers();
+  void verifyPositions();
 };
 
 #endif

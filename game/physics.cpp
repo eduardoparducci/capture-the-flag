@@ -56,7 +56,9 @@ void Physics::update(json state) {
         this->map->setRedScore();
         s = {92.6,3.5,87.5,-3.5};
       }
+	  this->players->verifyPositions();
       p->update(s);
+
     }
   }
 }
