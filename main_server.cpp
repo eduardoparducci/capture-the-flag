@@ -63,7 +63,7 @@ int main() {
       // Update game state
       server->updateGame(last_client_data[i]);
     }
-    std::this_thread::sleep_for (std::chrono::milliseconds(30));
+    std::this_thread::sleep_for (std::chrono::milliseconds(3000));
   }
   server->sclose();
   return 0;

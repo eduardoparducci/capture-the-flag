@@ -16,7 +16,7 @@ void wait_package(char **buffer, int buffer_size, bool *buffer_status, bool *run
       recv(connection_fd, *buffer, buffer_size, 0);
       *buffer_status = BUSY;
     }
-    this_thread::sleep_for (chrono::milliseconds(10));
+    this_thread::sleep_for (chrono::milliseconds(1000));
   }
   return;
 }
@@ -140,8 +140,8 @@ json Server::getPackage() {
       this->buffer_status[i] = FREE;
       if(!pkg.empty())
         buffers.push_back(pkg);
-      //cout << "Server: buffer(" << i << ") received:" << endl;
-      //cout << pkg.dump(4) << endl;
+      cout << "Server: buffer(" << i << ") received:" << endl;
+      cout << pkg.dump(4) << endl;
     }
   }
   return buffers;

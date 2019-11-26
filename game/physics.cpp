@@ -19,7 +19,8 @@ void Physics::update(json state) {
   if(!this->running) return;
 
   // Update keys pressed of the desired player
-  p->setDirection(state["keys"]);  
+  if(!state["keys"].empty())
+    p->setDirection(state["keys"]);  
 
   // Iterate every player
   for (int i = 0 ; i < (int)(*pl).size() ; i++) {

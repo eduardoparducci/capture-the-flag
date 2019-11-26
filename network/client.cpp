@@ -7,7 +7,7 @@ void wait_package(char **buffer, int buffer_size, bool *buffer_status, bool *run
       recv(socket_fd, *buffer, buffer_size, 0);
       *buffer_status = BUSY;
     }
-    std::this_thread::sleep_for (chrono::milliseconds(10));
+    std::this_thread::sleep_for (chrono::milliseconds(1000));
   }
   return;
 }
@@ -129,8 +129,8 @@ json Client::getPackage() {
   if(this->buffer_status == BUSY) {
     string buffer_copy(this->buffer);
     pkg = json::parse(buffer_copy);  
-    //cout << "Client: got package" << endl;
-    //cout << pkg.dump(4);
+    cout << "Client: got package" << endl;
+    cout << pkg.dump(4);
     this->buffer_status = FREE;
   }
   return pkg;
