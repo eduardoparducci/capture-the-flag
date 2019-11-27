@@ -51,10 +51,10 @@ void Player::resize(Square p) {
 }
 
 void Player::update(Square p) {
-  this->position.x_max = p.x_max;
-  this->position.y_max = p.y_max;
-  this->position.x_min = p.x_min;
-  this->position.y_min = p.y_min;
+  this->position.x_max = floorf(p.x_max*100)/100;
+  this->position.y_max = floorf(p.y_max*100)/100;
+  this->position.x_min = floorf(p.x_min*100)/100;
+  this->position.y_min = floorf(p.y_min*100)/100;
 }
 
 void Player::setDirection(json keys) {

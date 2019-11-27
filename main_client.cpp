@@ -22,7 +22,7 @@ int main(int argc, char **argv) {
   cin >> ip;
   cout << "GATE:";
   cin >> gate;
-  client = new Client(gate,ip,2000);
+  client = new Client(gate,ip,5000);
   
   cout << "Player name:";
   cin >> player_name;

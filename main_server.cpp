@@ -32,7 +32,7 @@ int main() {
   cout << "GATE:";
   cin >> gate;
 
-  server = new Server(gate,ip, 2000);
+  server = new Server(gate,ip, 5000);
   
   // Configure new game
   obs->addObstacle(o0);
@@ -50,9 +50,8 @@ int main() {
 
     // Fetched package
     if(!client_data.empty()) {
-
       // Verify new client
-      for(i=0 ; i<(int)client_data.size() ; i++) {
+      for(i=0 ; i<(int)client_data.size() ; i++) {        
         if(!client_data[i]["init"].empty()) {
           server->addClient(client_data[i]);
         }
@@ -63,7 +62,7 @@ int main() {
       // Update game state
       server->updateGame(last_client_data[i]);
     }
-    std::this_thread::sleep_for (std::chrono::milliseconds(80));
+    std::this_thread::sleep_for (std::chrono::milliseconds(50));
   }
   server->sclose();
   return 0;

@@ -1,19 +1,66 @@
 #include "client.hpp"
 
-mutex buffer_lock;
-
 void wait_package(char **buffer, int buffer_size, bool *buffer_status, bool *running, int socket_fd) {
+  int bytes_recv, total_bytes;
+  string *t;
   while(*running) {
-    while(!buffer_lock.try_lock());
-    if(*buffer_status==FREE) {
-      *buffer[0]= '\0';
-      recv(socket_fd, *buffer, buffer_size, 0);
+      if(*buffer_status==FREE) {
+        total_bytes = 0;
+        bytes_recv = 0;
+        *buffer[0]= '\0';
+        while((bytes_recv = recv(socket_fd, *buffer+total_bytes, buffer_size-total_bytes, 0)) > 0) {
+          if(bytes_recv < 0) {
+            *buffer_status=FREE;
+            return;
+          } else {
+            //cout << "Client: (pkg thread), got " << bytes_recv << "bytes as part of package." << endl; 
+            total_bytes += bytes_recv;
+            t = new string(*buffer);
+            //cout << "Client: (pkg thread) last char " << t->back() << endl;
+            if(t->back()=='@') {
+              t->pop_back();
+              //strcpy(*buffer,t->c_str());
+              break;
+            }
+          }
+      }
+      string final("{");
+      final.append(*t);
+      strcpy(*buffer,final.c_str());
       *buffer_status = BUSY;
+      //cout << "Client: pkg thread, complete package" << endl << t << endl;
+      std::this_thread::sleep_for (chrono::milliseconds(40));
     }
-    buffer_lock.unlock();
-    std::this_thread::sleep_for (chrono::milliseconds(50));
   }
-  return;
+}
+
+json Client::getPackage() {
+  json pkg;
+  if(this->buffer_status == BUSY) {
+    string buffer_copy(this->buffer);
+    this->buffer_status = FREE;
+    
+    //cout << buffer_copy << endl;
+    try {
+      pkg = json::parse(buffer_copy);
+      //cout << "Client: got package" << endl;
+      //cout << pkg.dump(4) << endl;
+    } catch(json::parse_error &e) {
+      cout << "Client: ERROR parsing json. returning" << endl;
+      this->buffer[0]= '\0';
+      pkg = {};
+    }
+  }
+  return pkg;
+}
+
+bool Client::sendPackage(string data) {
+  data.append("@");
+  if(send(this->socket_fd, data.c_str(), data.length()+1 , 0) < 0) {
+    return false;
+  }
+  cout << "Client: SUCCESS sending " << data << endl;
+  return true;
 }
 
 Client::Client(unsigned int gate, string ip, int buffer_size) {
@@ -58,7 +105,6 @@ bool Client::init(string player_name, string team) {
   client_info["team"] = team;
   client_info["init"] = true;
   sendPackage(client_info.dump());
-
   // Waiting for server response with timeout
   do {
     std::this_thread::sleep_for (std::chrono::milliseconds(100));
@@ -105,13 +151,6 @@ void Client::cclose() {
   close(socket_fd);
 }
 
-bool Client::sendPackage(string data) {
-  if(send(this->socket_fd, data.c_str(), data.size()+1, 0) < 0) {
-    return false;
-  }
-  return true;
-}
-
 PlayerList *Client::getPlayerList() {
   return this->players;
 }
@@ -128,28 +167,8 @@ Map *Client::getMap() {
   return this->map;
 }
 
-json Client::getPackage() {
-  json pkg;
-  if(buffer_lock.try_lock()) {
-    if(this->buffer_status == BUSY) {
-      string buffer_copy(this->buffer);
-      this->buffer_status = FREE;
-      buffer_lock.unlock();
-      pkg = json::parse(buffer_copy);  
-      //cout << "Client: got package" << endl;
-      //cout << pkg.dump(4);
-    } else {
-      buffer_lock.unlock();
-    }
-  }
-  return pkg;
-}
-
 bool Client::getBufferStatus() {
-  bool status = FREE;
-  if(buffer_lock.try_lock()) {
-    status = this->buffer_status;
-    buffer_lock.unlock();
-  }
+  bool status;
+  status = this->buffer_status;
   return status;
 }

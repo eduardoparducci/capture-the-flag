@@ -14,6 +14,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <mutex>
+#include <future>
 //#include <GLFW/glfw3.h>
 //#include <GL/glut.h>
 #include <GL/freeglut.h>

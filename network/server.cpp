@@ -1,7 +1,5 @@
 #include "server.hpp"
 
-mutex buffer_lock[MAX_CONNECTIONS];
-
 void wait_connections(bool *running, int *socket_fd, struct sockaddr_in *client, socklen_t *client_size, Server *s) {
   int conn_fd;
   while(*running) {
@@ -11,16 +9,32 @@ void wait_connections(bool *running, int *socket_fd, struct sockaddr_in *client,
 }
 
 void wait_package(char **buffer, int buffer_size, bool *buffer_status, bool *running, int connection_fd, int i) {
+  int bytes_recv, total_bytes;
   cout << "Server: (pkg thread) new thread initialized." << endl;
   while(*running) {
-    while(!buffer_lock[i].try_lock());
     if(*buffer_status==FREE) {
+      total_bytes = 0;
+      bytes_recv = 0;
       *buffer[0]= '\0';
-      recv(connection_fd, *buffer, buffer_size, 0);
+      while((bytes_recv = recv(connection_fd, *buffer+total_bytes, buffer_size-total_bytes, 0)) > 0) {
+        if(bytes_recv < 0) {
+          *buffer_status=FREE;
+          return;
+        } else {
+          //cout << "Server: (pkg thread) got " << bytes_recv << "bytes as part of package." << endl; 
+          total_bytes += bytes_recv;
+          string t(*buffer);
+          //cout << "Server: (pkg thread) last char " << t.back() << endl;
+          if(t.back()=='@') {
+            t.pop_back();
+            strcpy(*buffer,t.c_str());
+            break;
+          }
+        }
+      }
       *buffer_status = BUSY;
     }
-    buffer_lock[i].unlock();
-    this_thread::sleep_for (chrono::milliseconds(50));
+    std::this_thread::sleep_for (chrono::milliseconds(40));
   }
   return;
 }
@@ -137,30 +151,36 @@ json Server::getPackage() {
   json buffers;
   
   for(i=0 ; i<MAX_CONNECTIONS ; i++) {
-    if(buffer_lock[i].try_lock()) {
-      if(this->buffer_status[i]==BUSY) {
-        string buffer_copy(this->buffer[i]);
-        this->buffer_status[i] = FREE;
-        buffer_lock[i].unlock();
+    if(this->buffer_status[i]==BUSY) {
+      string buffer_copy(this->buffer[i]);
+      this->buffer_status[i] = FREE;
+      try {
         pkg = json::parse(buffer_copy);
-        pkg["client"] = i;
-        if(!pkg.empty())
-          buffers.push_back(pkg);
-        // cout << "Server: buffer(" << i << ") received:" << endl;
-        // cout << pkg.dump(4) << endl;
-      } else {
-        buffer_lock[i].unlock();
       }
+      catch(json::parse_error &e) {
+        cout << "Server: ERROR parsing json. returning" << endl;
+        pkg = {};
+        continue;
+      }
+      if(!pkg.empty()) {
+        pkg["client"] = i;
+        buffers.push_back(pkg);
+      }
+      cout << "Server: buffer(" << i << ") received:" << endl;
+      cout << pkg.dump(4) << endl;
     }
   }
   return buffers;
 }
 
 bool Server::sendPackage(string data) {
-  int i;
+  int i, res;
+  data.append("@");
   for(i=0 ; i<MAX_CONNECTIONS ; i++) {
     if(this->used_connections[i]) {
-      if(send(this->connection_fd[i], data.c_str(), data.size()+1, 0) < 0) {
+      //cout << "Server: sending" << data;
+      res = write(this->connection_fd[i], data.c_str()+1, data.length()+1);
+      if(res<0) {
         return false;
       }
     }
@@ -195,11 +215,15 @@ void Server::removeClient(json data) {
 
 void Server::updateGame(json state) {
   // Checking empy state (no players joined the server)
-  if(state.empty() || !state["init"].empty()) {
+  if(state.empty()) {
+    return;
+  }
+  if(!state["init"].empty() && state["init"].get<bool>()) {
     return;
   }
 
   // Updating physics
+  //cout << state.dump(4) << endl;
   this->physics->update(state);
 
   // Broadcasting result
