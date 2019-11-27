@@ -13,13 +13,10 @@ void wait_package(char **buffer, int buffer_size, bool *buffer_status, bool *run
             *buffer_status=FREE;
             return;
           } else {
-            //cout << "Client: (pkg thread), got " << bytes_recv << "bytes as part of package." << endl; 
             total_bytes += bytes_recv;
             t = new string(*buffer);
-            //cout << "Client: (pkg thread) last char " << t->back() << endl;
             if(t->back()=='@') {
               t->pop_back();
-              //strcpy(*buffer,t->c_str());
               break;
             }
           }
@@ -28,7 +25,6 @@ void wait_package(char **buffer, int buffer_size, bool *buffer_status, bool *run
       final.append(*t);
       strcpy(*buffer,final.c_str());
       *buffer_status = BUSY;
-      //cout << "Client: pkg thread, complete package" << endl << t << endl;
       std::this_thread::sleep_for (chrono::milliseconds(40));
     }
   }

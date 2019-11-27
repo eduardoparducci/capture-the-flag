@@ -21,10 +21,8 @@ void wait_package(char **buffer, int buffer_size, bool *buffer_status, bool *run
           *buffer_status=FREE;
           return;
         } else {
-          //cout << "Server: (pkg thread) got " << bytes_recv << "bytes as part of package." << endl; 
           total_bytes += bytes_recv;
           string t(*buffer);
-          //cout << "Server: (pkg thread) last char " << t.back() << endl;
           if(t.back()=='@') {
             t.pop_back();
             strcpy(*buffer,t.c_str());
