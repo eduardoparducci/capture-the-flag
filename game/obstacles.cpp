@@ -33,11 +33,10 @@ void Obstacle::update(Square p, Dynamic d) {
 }
 
 bool Obstacle::hit(Square position) {
-  // 0.4 added empirically
-  if(position.x_max-0.4>=this->position.x_min &&
-     position.x_min+0.4<=this->position.x_max &&
-     position.y_max-0.4>=this->position.y_min &&
-     position.y_min+0.4<=this->position.y_max) {
+  if(position.x_max>=this->position.x_min &&
+     position.x_min<=this->position.x_max &&
+     position.y_max>=this->position.y_min &&
+     position.y_min<=this->position.y_max) {
     return true;
   } else {
   return false;

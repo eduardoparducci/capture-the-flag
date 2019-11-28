@@ -9,32 +9,22 @@ void wait_connections(bool *running, int *socket_fd, struct sockaddr_in *client,
 }
 
 void wait_package(char **buffer, int buffer_size, bool *buffer_status, bool *running, int connection_fd, int i) {
-  int bytes_recv, total_bytes;
+  int bytes_recv;
   cout << "Server: (pkg thread) new thread initialized." << endl;
   while(*running) {
     if(*buffer_status==FREE) {
-      total_bytes = 0;
       bytes_recv = 0;
       *buffer[0]= '\0';
-      while((bytes_recv = recv(connection_fd, *buffer+total_bytes, buffer_size-total_bytes, 0)) > 0) {
-        if(bytes_recv < 0) {
-          *buffer_status=FREE;
-          return;
-        } else {
-          total_bytes += bytes_recv;
-          string t(*buffer);
-          if(t.back()=='@') {
-            t.pop_back();
-            strcpy(*buffer,t.c_str());
-            break;
-          }
-        }
+      bytes_recv = recv(connection_fd, *buffer, buffer_size, 0);
+      if(bytes_recv < 0) {
+        *buffer[0]= '\0';
+        *buffer_status=FREE;
+      } else {
+        *buffer_status = BUSY;
       }
-      *buffer_status = BUSY;
     }
     std::this_thread::sleep_for (chrono::milliseconds(40));
   }
-  return;
 }
 
 int Server::addConnection(int connection_fd) {
@@ -152,18 +142,25 @@ json Server::getPackage() {
     if(this->buffer_status[i]==BUSY) {
       string buffer_copy(this->buffer[i]);
       this->buffer_status[i] = FREE;
+
+      // Verify package integrity
       try {
         pkg = json::parse(buffer_copy);
+        //cout << "Server: got package" << endl;
+        //cout << pkg.dump(4) << endl;
       }
       catch(json::parse_error &e) {
         cout << "Server: ERROR parsing json. returning" << endl;
         pkg = {};
         continue;
       }
+
+      // Append client id to package
       if(!pkg.empty()) {
         pkg["client"] = i;
         buffers.push_back(pkg);
       }
+      
       cout << "Server: buffer(" << i << ") received:" << endl;
       cout << pkg.dump(4) << endl;
     }
@@ -173,11 +170,9 @@ json Server::getPackage() {
 
 bool Server::sendPackage(string data) {
   int i, res;
-  data.append("@");
   for(i=0 ; i<MAX_CONNECTIONS ; i++) {
     if(this->used_connections[i]) {
-      //cout << "Server: sending" << data;
-      res = write(this->connection_fd[i], data.c_str()+1, data.length()+1);
+      res = write(this->connection_fd[i], data.c_str(), data.length()+1);
       if(res<0) {
         return false;
       }
@@ -221,7 +216,6 @@ void Server::updateGame(json state) {
   }
 
   // Updating physics
-  //cout << state.dump(4) << endl;
   this->physics->update(state);
 
   // Broadcasting result

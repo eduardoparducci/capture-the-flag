@@ -110,9 +110,9 @@ void Gtk::drawObstacles() {
 
   vector<Obstacle *> *o = this->client->getObstacleList()->getObstacles();
   Square s;
-
+  
   // Cofigure player appearence
-  glColor3f(0.0f, 0.0f, 0.0f); // Black
+  glColor3f(0.5f, 0.5f, 0.5f); // Grey
   for (int i = 0 ; i < (int)(*o).size() ; i++) {
     s = (*o)[i]->getPosition();
     glBegin(GL_QUADS);

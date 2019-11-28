@@ -14,8 +14,8 @@ int main() {
 
   // Game variables
   Map *map = new Map({100.0f, 100.0f, -100.0f, -100.0f}, {-80.0f, 100.0f, -100.0f, -100.0f}, {100.0f, 100.0f, 80.0f, -100.0f});
-  Obstacle *o0 = new Obstacle ({30.0f, 30.0f, 20.0f, 20.0f},{0,0,0});
-  Obstacle *o1 = new Obstacle ({30.0f, -30.0f, 20.0f, -40.0f},{0,0,0});
+  Obstacle *o0 = new Obstacle ({10.0f, 80.0f, 5.0f, 20.0f},{0.4,0.4,0.4});
+  Obstacle *o1 = new Obstacle ({-5.0f, -20.0f, -10.0f, -80.0f},{0.4,0.4,0.4});
   ObstacleList *obs = new ObstacleList();
   Physics *physics;
 

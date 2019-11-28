@@ -1,49 +1,38 @@
 #include "client.hpp"
 
 void wait_package(char **buffer, int buffer_size, bool *buffer_status, bool *running, int socket_fd) {
-  int bytes_recv, total_bytes;
-  string *t;
-  while(*running) {
-      if(*buffer_status==FREE) {
-        total_bytes = 0;
-        bytes_recv = 0;
+  int bytes_recv;
+  cout << "Client: (pkg thread) new thread initialized." << endl;
+ while(*running) {
+    if(*buffer_status==FREE) {
+      *buffer[0]= '\0';
+      bytes_recv = recv(socket_fd, *buffer, buffer_size, 0);
+      if(bytes_recv < 0) {
         *buffer[0]= '\0';
-        while((bytes_recv = recv(socket_fd, *buffer+total_bytes, buffer_size-total_bytes, 0)) > 0) {
-          if(bytes_recv < 0) {
-            *buffer_status=FREE;
-            return;
-          } else {
-            total_bytes += bytes_recv;
-            t = new string(*buffer);
-            if(t->back()=='@') {
-              t->pop_back();
-              break;
-            }
-          }
+        *buffer_status=FREE;
+      } else {
+        *buffer_status = BUSY;
       }
-      string final("{");
-      final.append(*t);
-      strcpy(*buffer,final.c_str());
-      *buffer_status = BUSY;
-      std::this_thread::sleep_for (chrono::milliseconds(40));
     }
+    std::this_thread::sleep_for (chrono::milliseconds(40));
   }
 }
 
 json Client::getPackage() {
   json pkg;
+  
   if(this->buffer_status == BUSY) {
+    
     string buffer_copy(this->buffer);
     this->buffer_status = FREE;
-    
-    //cout << buffer_copy << endl;
+
+    // Verify package integrity    
     try {
       pkg = json::parse(buffer_copy);
       //cout << "Client: got package" << endl;
       //cout << pkg.dump(4) << endl;
     } catch(json::parse_error &e) {
       cout << "Client: ERROR parsing json. returning" << endl;
-      this->buffer[0]= '\0';
       pkg = {};
     }
   }
@@ -51,11 +40,10 @@ json Client::getPackage() {
 }
 
 bool Client::sendPackage(string data) {
-  data.append("@");
   if(send(this->socket_fd, data.c_str(), data.length()+1 , 0) < 0) {
     return false;
   }
-  cout << "Client: SUCCESS sending " << data << endl;
+  //cout << "Client: SUCCESS sending " << data << endl;
   return true;
 }
 
@@ -101,7 +89,8 @@ bool Client::init(string player_name, string team) {
   client_info["team"] = team;
   client_info["init"] = true;
   sendPackage(client_info.dump());
-  // Waiting for server response with timeout
+  
+  // Waiting for server response with timeout (aprox. 10s)
   do {
     std::this_thread::sleep_for (std::chrono::milliseconds(100));
     server_response = getPackage();
